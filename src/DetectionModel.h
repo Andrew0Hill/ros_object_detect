@@ -1,6 +1,13 @@
-//
-// Created by ros on 3/18/18.
-//
+/*
+ * DetectionModel -
+ *
+ * Encapsulates the functionality of a TensorFlow object detection model.
+ * This code can use models from the TensorFlow Model Zoo at:
+ * https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
+ *
+ * Contains a class (DetectionModel) which can be instantiated to create a new TF session, load a frozen model graph,
+ * and perform image object detection based on that model graph.
+ */
 
 #ifndef OBJECT_DETECT_DETECTIONMODEL_H
 #define OBJECT_DETECT_DETECTIONMODEL_H
@@ -17,17 +24,10 @@
 
 // OpenCV include
 #include <opencv2/core.hpp>
-
+#include <opencv2/imgproc/imgproc.hpp>
 #include <utility>
 #include <cstdint>
-/*
- * DetectionModel -
- *
- * Encapsulates the functionality of a TensorFlow object detection model.
- * This code can use models from the TensorFlow Model Zoo at:
- * https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
- *
- */
+
 
 // Use abbreviated namespace name for readability.
 namespace tf = tensorflow;
@@ -37,7 +37,7 @@ public:
                    int im_width=IMAGE_WIDTH,
                    int im_height=IMAGE_HEIGHT,
                    int im_channels=IMAGE_CHANNELS);
-    std::vector<DetectedObject> detectImage(cv::Mat image);
+    std::vector<std::shared_ptr<DetectedObject>> detectImage(cv::Mat &image);
 
 
 private:
@@ -53,9 +53,18 @@ private:
     // Holds the graph definition for the TensorFlow session.
     tf::GraphDef graphDef;
 
+    // Vector to hold the results of a Session->run call.
     std::vector<tf::Tensor> output_tensors;
 
-    std::vector<DetectedObject> get_valid_objects(std::vector<tf::Tensor> output_tensors);
+    int width,height,dims;
+
+    // Helper function to filter the results of a Session->run by creating a vector of
+    // DetectedObjects only for objects which pass a confidence threshold.
+    std::vector<std::shared_ptr<DetectedObject>> get_valid_objects(std::vector<tf::Tensor> &output_tensors, float thresh = 0.5);
+
+    void set_abs_coords(std::shared_ptr<DetectedObject> obj, float* boxes, int row);
+
+    void set_mask(std::shared_ptr<DetectedObject> obj, float* mask, int row);
     // Reads a frozen graph from file.
     void readModelFromFile(std::string filename);
 

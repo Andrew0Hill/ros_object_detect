@@ -8,50 +8,39 @@
 #include <unordered_map>
 #include <vector>
 #include <opencv2/core/core.hpp>
+#include <iostream>
 
 
 class DetectedObject {
 private:
-   /* static std::unordered_map<int,std::string> class_map =
-            {
-                    {1,"person"},
-                    {2,"bicycle"},
-                    {15,"bench"},
-                    {27,"backpack"},
-                    {31,"handbag"},
-                    {32,"tie"},
-                    {33,"suitcase"},
-                    {44,"bottle"},
-                    {46,"wine glass"},
-                    {47,"cup"},
-                    {49,"knife"},
-                    {62,"chair"},
-                    {63,"couch"},
-                    {64,"potted plant"},
-                    {65,"bed"},
-                    {67,"dining table"},
-                    {70,"toilet"},
-                    {72,"tv"},
-                    {73,"laptop"},
-                    {74,"mouse"},
-                    {75,"remote"},
-                    {76,"keyboard"},
-                    {77,"cell phone"},
-                    {81,"sink"},
-                    {82,"refrigerator"},
-                    {84,"book"},
-                    {85,"clock"}
-            };*/
+    static const std::unordered_map<int,std::string> class_map;
 public:
-    int ymin,ymax,xmin,xmax;
+    int oclass,ymin,ymax,xmin,xmax;
     float score;
     cv::Mat mask;
-    void setCoords(int ym, int yx, int xm, int xx){
-        ymin = ym;
-        ymax = yx;
-        xmin = xm;
-        xmax = xx;
+    DetectedObject(int c_num){
+        oclass = c_num;
     }
+    std::string to_string(){
+        std::stringstream stream;
+        stream << print_detected_class() << print_bounding_box();
+        return stream.str();
+    }
+    std::string print_bounding_box(){
+        std::stringstream stream;
+        stream << "Bounding Box: (" << xmin << "," << ymin << ") (" << xmax << "," << ymax << ")" << std::endl;
+        return stream.str();
+    }
+    std::string print_detected_class(){
+        std::stringstream stream;
+        stream << "Detected Class: " << get_class() << std::endl;
+        return stream.str();
+    }
+    std::string get_class() {return class_map.at(oclass);}
+    // Returns true if the class number exists in the class map, and false otherwise.
+    static bool class_exists(int c_num){ return (class_map.find(c_num) != class_map.end()); }
+    // Gets the class string associated with a class number.
+    static std::string get_class(int c_num){ return class_map.at(c_num); }
 };
 
 

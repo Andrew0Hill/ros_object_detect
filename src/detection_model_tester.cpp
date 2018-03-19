@@ -16,6 +16,10 @@ int main(){
         exit(1);
     }
     std::cout << "Detecting Image" << std::endl;
-    dm.detectImage(test_image);
+    std::vector<std::shared_ptr<DetectedObject>> objects;
+    objects = dm.detectImage(test_image);
+    for (int i = 0; i < objects.size(); ++i){
+        std::cout << objects[i]->to_string() << std::endl;
+    }
     return 0;
 }

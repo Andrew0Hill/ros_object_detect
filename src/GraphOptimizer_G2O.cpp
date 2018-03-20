@@ -27,7 +27,7 @@ GraphOptimizer_G20::GraphOptimizer_G20()
 int GraphOptimizer_G2O::addVertex(Eigen::Vector3f &vertexPose)
 {
     // Transform Eigen::Vector3f into translation and rotation for g2o
-    g2o::Vector2d translation = t(vertexPose(0),vertexPose(1));
+    g2o::Vector2d t(vertexPose(0),vertexPose(1));
     double r = vertexPose(2);
 
     // Vertex pose is set to r and t
@@ -59,8 +59,8 @@ int GraphOptimizer_G2O::addVertex(Eigen::Vector3f &vertexPose)
 void GraphOptimizer_G2O::addEdge(const int fromIndex, const int toIndex, Eigen::Vector3f &relativePose, Eigen::Matrix<double,3,3> &infoMatrix)
 {
     // Transform Eigen::Vector3f into translation and rotation for g2o
-    g2o::Vector2d translation = t(vertexPose(0),vertexPose(1));
-    double r = vertexPose(2);   
+    g2o::Vector2d t(relativePose(0),relativePose(1));
+    double r = relativePose(2);   
 }
 
 void optimizeGraph()

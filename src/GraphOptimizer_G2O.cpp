@@ -31,7 +31,7 @@ int GraphOptimizer_G2O::addVertex(Eigen::Vector3f &vertexPose)
     double r = vertexPose(2);
 
     // Vertex pose is set to r and t
-    g2o::SE2 pose(r,t)
+    g2o::SE2 pose(r,t);
 
     // Setup node with g2o::VertexSE2 i x y theta
     g2o::VertexSE2 *vc = new g2o::VertexSE2();
@@ -60,7 +60,24 @@ void GraphOptimizer_G2O::addEdge(const int fromIndex, const int toIndex, Eigen::
 {
     // Transform Eigen::Vector3f into translation and rotation for g2o
     g2o::Vector2d t(relativePose(0),relativePose(1));
-    double r = relativePose(2);   
+    double r = relativePose(2); 
+
+    // Relative transformation
+    g2o::SE2 relativeTransform(r,t);
+
+    // Setup Edge
+    g2o::EdgeSE2 *edge = new g2o::EdgeSE2;
+    edge->vertices()[0] = optimizer.vertex(fromIndex);
+    edge->vertices()[1] = optimizer.vertex(toIndex);
+
+    // setMeasurement takes a SE2 object relativeTransform
+    edge->setMeasurement(relativeTransform);
+
+    // Set the information matrix to identity
+    edge->setInformation(infoMatrix);
+
+    // Add edge to the optimizer
+    optimizer.addEdge(edge);
 }
 
 void optimizeGraph()
@@ -70,5 +87,5 @@ void optimizeGraph()
 
 void saveGraph(std::string fileName)
 {
-
+    optimizer.save(fileName.c_str(),0)
 }

@@ -146,7 +146,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 #add_executable(${PROJECT_NAME}_node src/object_detect_node.cpp src/object_detect_node.h)
-add_executable(object_detect_node src/detection_model_tester.cpp src/DetectionModel.cpp src/DetectionModel.h src/DetectedObject.cpp src/DetectedObject.h)
+add_executable(object_detect_test src/detection_model_tester.cpp src/detection_model_tester.h src/DetectionModel.cpp src/DetectionModel.h src/DetectedObject.h src/Memory.cpp src/Memory.h src/Type.cpp src/Type.h src/ClassMap.cpp src/ClassMap.h)
+add_executable(object_detect_node src/object_detect_node.cpp src/object_detect_node.h src/DetectionModel.cpp src/DetectionModel.h src/DetectedObject.h src/Memory.cpp src/Memory.h src/Type.cpp src/Type.h src/ClassMap.cpp src/ClassMap.h)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -165,7 +166,13 @@ add_executable(object_detect_node src/detection_model_tester.cpp src/DetectionMo
          ${Protobuf_LIBRARIES}
          ${TensorFlow_LIBRARIES}
  )
-
+target_link_libraries(
+        object_detect_test
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${Protobuf_LIBRARIES}
+        ${TensorFlow_LIBRARIES}
+)
 
 message(STATUS "TensorFlow Config:")
 message(STATUS "Include: ${TensorFlow_INCLUDE_DIRS}")

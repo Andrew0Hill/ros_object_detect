@@ -80,7 +80,6 @@ std::vector<std::shared_ptr<DetectedObject>> DetectionModel::get_valid_objects(s
     float num_detections = output_tensors[4].flat<float>().data()[0];
 
     std::vector<std::shared_ptr<DetectedObject>> detected_objects = std::vector<std::shared_ptr<DetectedObject>>();
-    std::cout << num_detections << std::endl;
     for(int i = 0; i < num_detections; ++i){
         // The scores tensor is sorted highest->lowest.
         // If we come across a score that is lower than the threshold,

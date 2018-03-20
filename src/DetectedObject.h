@@ -9,11 +9,9 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <iostream>
-
+#include "ClassMap.h"
 
 class DetectedObject {
-private:
-    static const std::unordered_map<int,std::string> class_map;
 public:
     int oclass,ymin,ymax,xmin,xmax;
     float score;
@@ -36,11 +34,11 @@ public:
         stream << "Detected Class: " << get_class() << std::endl;
         return stream.str();
     }
-    std::string get_class() {return class_map.at(oclass);}
+    std::string get_class() {return ClassMap::class_map.at(oclass);}
     // Returns true if the class number exists in the class map, and false otherwise.
-    static bool class_exists(int c_num){ return (class_map.find(c_num) != class_map.end()); }
+    static bool class_exists(int c_num){ return (ClassMap::class_map.find(c_num) != ClassMap::class_map.end()); }
     // Gets the class string associated with a class number.
-    static std::string get_class(int c_num){ return class_map.at(c_num); }
+    static std::string get_class(int c_num){ return ClassMap::class_map.at(c_num); }
 };
 
 

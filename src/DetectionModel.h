@@ -13,8 +13,8 @@
 #define OBJECT_DETECT_DETECTIONMODEL_H
 
 #define MODEL_PATH  "frozen_inference_graph.pb"
-#define IMAGE_WIDTH 1024
-#define IMAGE_HEIGHT 636
+#define IMAGE_WIDTH 640
+#define IMAGE_HEIGHT 480
 #define IMAGE_CHANNELS 3
 // TensorFlow includes
 #include "tensorflow/core/public/session.h"

@@ -23,7 +23,8 @@ private:
     derived from OptimizableGraph which is an abstract class that 
     represents one optimization problem. It specializes the general graph 
     to contain special vertices and edges. The vertices represent parameters 
-    that can be optimized, while the edges represent constraints.
+    that can be optimized, while the edges represent constraints generated from 
+    sensor measurements.
     */
     g2o::SparseOptimizer optimizer;
     g2o::BlockSolverX::LinearSolverType *linearSolver_ptr;
@@ -39,8 +40,9 @@ public:
 
     // Add an edge that defines a spatial constraint between fromIndex and toIndex
     // With the information matrix, computes a weight associated with the added edge.
-    // INPUT: 6x6 matrix of type float Information Matrix
-    void addEdge(const int fromIndex, const int toIndex, Eigen::Vector3f &relativePose, Eigen::Matrix<double,6,6> &infoMatrix);
+    // INPUT: Index of a fromVertex and toVertex, Column vector giving relative pose.
+    // 3x3 matrix of type float Information Matrix.
+    void addEdge(const int fromIndex, const int toIndex, Eigen::Vector3f &relativePose, Eigen::Matrix<double,3,3> &infoMatrix);
 
     // Calls a graph optimization process from g2o::SparseOptimizer
     // to determine the pose configuration that best satisfies the edge constraints

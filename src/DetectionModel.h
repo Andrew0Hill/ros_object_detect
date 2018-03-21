@@ -37,8 +37,12 @@ public:
                    int im_width=IMAGE_WIDTH,
                    int im_height=IMAGE_HEIGHT,
                    int im_channels=IMAGE_CHANNELS);
+    ~DetectionModel(){
+        std::cout << "Closing TensorFlow Session." << std::endl;
+        session->Close();
+    }
     std::vector<std::shared_ptr<DetectedObject>> detectImage(cv::Mat &image);
-
+    void shutdownSession();
 
 private:
     // Holds the current TensorFlow session.
@@ -65,6 +69,8 @@ private:
     void set_abs_coords(std::shared_ptr<DetectedObject> obj, float* boxes, int row);
 
     void set_mask(std::shared_ptr<DetectedObject> obj, float* mask, int row);
+
+    void set_image_roi(std::shared_ptr<DetectedObject> obj, float* boxes);
     // Reads a frozen graph from file.
     void readModelFromFile(std::string filename);
 

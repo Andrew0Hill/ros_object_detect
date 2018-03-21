@@ -3,6 +3,7 @@
 //
 
 #include <opencv-3.3.1/opencv2/highgui.hpp>
+#include <opencv-3.3.1/opencv2/features2d.hpp>
 #include "DetectionModel.h"
 
 void DetectionModel::readModelFromFile(std::string filename) {
@@ -63,11 +64,9 @@ DetectionModel::DetectionModel(std::string model_path, int im_width, int im_heig
     std::cout << "Building session" << std::endl;
     // Build the session using the graphDef we read the file into.
     buildSession(graphDef);
-    std::cout << "Image tensor" << std::endl;
     // Set up image_tensor
     image_tensor = tf::Tensor(tf::DT_UINT8,tf::TensorShape({1,im_height,im_width,im_channels}));
     // Set up memory-mapped cv::Mat
-    std::cout << "Memory mapped cv::Mat" << std::endl;
     image_mat = cv::Mat(im_height,im_width,CV_8UC3,image_tensor.flat<tf::uint8>().data());
 }
 
@@ -94,6 +93,8 @@ std::vector<std::shared_ptr<DetectedObject>> DetectionModel::get_valid_objects(s
             set_abs_coords(obj,boxes,i*4);
             // Calculate the mask coordinates of this object position in the frame.
             set_mask(obj,masks,i*15*15);
+            // Set the image ROI from the image vector
+            set_image_roi(obj,boxes);
             // Add detected object to the objects vector.
             detected_objects.push_back(obj);
         }
@@ -125,7 +126,7 @@ void DetectionModel::set_abs_coords(std::shared_ptr<DetectedObject> obj, float* 
  */
 void DetectionModel::set_mask(std::shared_ptr<DetectedObject> obj, float *mask, int row) {
     // Create a cv::Mat that refers to the 15x15 mask tensor
-    cv::Mat small_mat = cv::Mat(15,15,CV_32FC1,mask);
+    cv::Mat small_mat = cv::Mat(15,15,CV_32FC1,mask+row);
     // Calculate the width and height of the bounding box
     int x_size = obj->xmax - obj->xmin;
     int y_size = obj->ymax - obj->ymin;
@@ -135,6 +136,29 @@ void DetectionModel::set_mask(std::shared_ptr<DetectedObject> obj, float *mask, 
     cv::threshold(obj->mask,obj->mask,0.5,255,cv::THRESH_BINARY);
     // Convert mask to a 1-channel, 8-bit type (A mask image).
     obj->mask.convertTo(obj->mask,CV_8UC1);
+}
+/*
+ * set_image_roi
+ *
+ * Helper function to set the image ROI matrix of the detection object.
+ * Because image_mat is a pointer and gets reset after every call to detectImage, we need to
+ * copy the current value of the ROI from image_mat into a new matrix.
+ */
+void DetectionModel::set_image_roi(std::shared_ptr<DetectedObject> obj, float *boxes) {
+    // Calculate the width and height of the bounding box
+    int x_size = obj->xmax - obj->xmin;
+    int y_size = obj->ymax - obj->ymin;
+    // Create a rectangle ROI for our image.
+    cv::Rect roi(obj->xmin,obj->ymin,x_size,y_size);
+    // Create a new ROI cv::Mat that points to the ROI inside image_mat
+    cv::Mat roi_image = cv::Mat(image_mat,roi);
+    // Copy the ROI into the objects cv::Mat
+    roi_image.copyTo(obj->image);
+}
+
+void DetectionModel::shutdownSession() {
+    session->Close();
+    std::cout << "Closing TensorFlow Session." << std::endl;
 }
 
 

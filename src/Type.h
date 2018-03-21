@@ -11,7 +11,7 @@ public:
     // ID number to uniquely identify this type.
     // This should be the ID number we get from the DetectedObje
     int id;
-
+    Type(int oid){id = oid;}
     //static int alloc_id = 0;
 
 };

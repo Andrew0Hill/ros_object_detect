@@ -16,6 +16,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <std_msgs/String.h>
 #include "DetectionModel.h"
+#include "ORB_Featurizer.h"
 /*
 +--------+----+----+----+----+------+------+------+------+
 |        | C1 | C2 | C3 | C4 | C(5) | C(6) | C(7) | C(8) |

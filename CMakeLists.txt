@@ -146,8 +146,26 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 #add_executable(${PROJECT_NAME}_node src/object_detect_node.cpp src/object_detect_node.h)
-add_executable(object_detect_test src/detection_model_tester.cpp src/detection_model_tester.h src/DetectionModel.cpp src/DetectionModel.h src/DetectedObject.h src/Memory.cpp src/Memory.h src/Type.cpp src/Type.h src/ClassMap.cpp src/ClassMap.h)
-add_executable(object_detect_node src/object_detect_node.cpp src/object_detect_node.h src/DetectionModel.cpp src/DetectionModel.h src/DetectedObject.h src/Memory.cpp src/Memory.h src/Type.cpp src/Type.h src/ClassMap.cpp src/ClassMap.h)
+set(SOURCES_LIST
+        src/DetectionModel.cpp
+        src/DetectionModel.h
+        src/DetectedObject.h
+        src/Memory.cpp
+        src/Memory.h
+        src/Type.cpp
+        src/Type.h
+        src/ClassMap.cpp
+        src/ClassMap.h
+        src/ObjectInstance.cpp
+        src/ObjectInstance.h
+        src/DetectedObject.cpp
+        src/Featurizer.h
+        src/ORB_Featurizer.cpp
+        src/ORB_Featurizer.h
+        src/SURF_Featurizer.cpp
+        src/SURF_Featurizer.h)
+add_executable(object_detect_test src/detection_model_tester.cpp src/detection_model_tester.h ${SOURCES_LIST})
+add_executable(object_detect_node src/object_detect_node.cpp src/object_detect_node.h ${SOURCES_LIST})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

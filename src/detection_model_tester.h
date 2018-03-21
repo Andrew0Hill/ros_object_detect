@@ -4,11 +4,6 @@
 
 #ifndef OBJECT_DETECT_DETECTION_MODEL_TESTER_H
 #define OBJECT_DETECT_DETECTION_MODEL_TESTER_H
-
-
-class detection_model_tester {
-
-};
-
+#include "ORB_Featurizer.h"
 
 #endif //OBJECT_DETECT_DETECTION_MODEL_TESTER_H

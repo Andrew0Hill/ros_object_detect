@@ -24,7 +24,7 @@ private:
     represents one optimization problem. It specializes the general graph 
     to contain special vertices and edges. The vertices represent parameters 
     that can be optimized, while the edges represent constraints generated from 
-    sensor measurements.
+    sensor measurements. We assume the graph to be sparse.
     */
     g2o::SparseOptimizer optimizer;
     g2o::BlockSolverX::LinearSolverType *linearSolver_ptr;

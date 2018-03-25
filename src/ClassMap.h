@@ -10,6 +10,8 @@
 class ClassMap {
 public:
     static const std::unordered_map<int, std::string> class_map;
+    static bool class_exists(int c_num){ return class_map.find(c_num) != class_map.end(); }
+    static std::string get_class(int c_num){ return class_map.at(c_num); }
 };
 
 

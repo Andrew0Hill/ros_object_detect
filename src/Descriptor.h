@@ -6,8 +6,18 @@
 #define OBJECT_DETECT_DESCRIPTOR_H
 
 
-class Descriptor {
+#include <opencv2/core.hpp>
+#include <opencv2/core/types.hpp>
 
+/*
+ * Descriptor
+ *
+ * Descriptor is a high-level wrapper for pairs of
+ * cv::Mat (A descriptor) and cv::KeyPoint (A keypoint in an image).
+ */
+
+class Descriptor {
+    cv::Mat desc;
 };
 
 

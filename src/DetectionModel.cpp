@@ -86,7 +86,7 @@ std::vector<std::shared_ptr<DetectedObject>> DetectionModel::get_valid_objects(s
         if (scores[i] < thresh)
             break;
         // Check that the detected object class exists in our class map.
-        if (DetectedObject::class_exists(static_cast<int>(classes[i]))){
+        if (ClassMap::class_exists(static_cast<int>(classes[i]))){
             // If so, make a new DetectedObject of this class type.
             std::shared_ptr<DetectedObject> obj(new DetectedObject(static_cast<int>(classes[i])));
             // Calculate the absolute coordinates of the object's position in the frame.

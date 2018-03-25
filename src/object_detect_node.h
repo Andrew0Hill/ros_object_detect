@@ -17,6 +17,8 @@
 #include <std_msgs/String.h>
 #include "DetectionModel.h"
 #include "ORB_Featurizer.h"
+#include "Memory.h"
+#define MIN_FEATURE_NUM 15
 /*
 +--------+----+----+----+----+------+------+------+------+
 |        | C1 | C2 | C3 | C4 | C(5) | C(6) | C(7) | C(8) |

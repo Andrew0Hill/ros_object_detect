@@ -23,6 +23,9 @@ find_package(TensorFlow REQUIRED)
 # Find Eigen and Protobuf, which are dependencies for TensorFlow
 find_package(Eigen REQUIRED)
 find_package(Protobuf REQUIRED)
+# Find G2O, which is required for graph optimization
+find_package(G2O REQUIRED)
+
 message(STATUS "MODULE PATH = ${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -130,6 +133,7 @@ include_directories(
         ${Eigen_INCLUDE_DIRS}
         ${Protobuf_INCLUDE_DIRS}
         ${TensorFlow_INCLUDE_DIRS}
+        ${G2O_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -165,7 +169,8 @@ set(SOURCES_LIST
         src/SURF_Featurizer.cpp
         src/SURF_Featurizer.h)
 add_executable(object_detect_test src/detection_model_tester.cpp src/detection_model_tester.h ${SOURCES_LIST})
-add_executable(object_detect_node src/object_detect_node.cpp src/object_detect_node.h ${SOURCES_LIST})
+add_executable(object_detect_node src/object_detect_node.cpp src/object_detect_node.h ${SOURCES_LIST} src/Descriptor.cpp src/Descriptor.h)
+#add_executable(map_publisher_test src/map_publisher_test.h src/map_publisher_test.h src/GraphOptimizer_G2O.cpp src/GraphOptimizer_G2O.h)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -192,6 +197,11 @@ target_link_libraries(
         ${TensorFlow_LIBRARIES}
 )
 
+#target_link_libraries(
+#        map_publisher_test
+#        ${G2O_CORE_LIBRARY}
+#)
+
 message(STATUS "TensorFlow Config:")
 message(STATUS "Include: ${TensorFlow_INCLUDE_DIRS}")
 message(STATUS "Libraries: ${TensorFlow_LIBRARIES}")
@@ -202,6 +212,10 @@ message(STATUS "Include: ${Eigen_INCLUDE_DIRS}")
 message(STATUS "Protobuf Config:")
 message(STATUS "Include: ${Protobuf_INCLUDE_DIRS}")
 message(STATUS "Libraries: ${Protobuf_LIBRARIES}")
+
+message(STATUS "G2O Config:")
+message(STATUS "Include: ${G2O_INCLUDE_DIR}")
+message(STATUS "Libraries: ${G2O_CORE_LIBRARY}")
 #############
 ## Install ##
 #############

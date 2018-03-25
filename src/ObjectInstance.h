@@ -9,10 +9,22 @@
 #include <opencv-3.3.1/opencv2/core/mat.hpp>
 #include <memory>
 #include <opencv2/xfeatures2d.hpp>
+#include "DetectedObject.h"
+class DetectedObject;
 class ObjectInstance {
     // ID to uniquely represent this object within its Type.
     int oid;
-    std::vector<std::shared_ptr<cv::Mat>> images;
+    // Vector of DetectedObject instances for this ObjectInstance.
+    std::vector<std::shared_ptr<DetectedObject>> images;
+public:
+    ObjectInstance(int id, std::shared_ptr<DetectedObject> obj_ptr){
+        oid = id;
+        images.push_back(obj_ptr);
+    }
+    void add_image(std::shared_ptr<DetectedObject> obj_ptr){
+        images.push_back(obj_ptr);
+    }
+    int get_id(){return oid;}
 };
 
 

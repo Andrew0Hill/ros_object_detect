@@ -5,14 +5,14 @@
 #ifndef OBJECT_DETECT_DETECTEDOBJECT_H
 #define OBJECT_DETECT_DETECTEDOBJECT_H
 
-#include <unordered_map>
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d.hpp>
 #include <iostream>
 #include "ClassMap.h"
+#include "ObjectInstance.h"
 
-
+class ObjectInstance;
 // TODO: Should this replace FeatureImage??
 // Just add members for feature descriptors, image ROI, etc.
 class DetectedObject {
@@ -30,9 +30,16 @@ public:
     // Matrix of descriptors for the image;
     cv::Mat descriptors;
 
+    std::shared_ptr<ObjectInstance> parent;
+
+
     DetectedObject(int c_num){
         oclass = c_num;
     }
+    void set_parent(std::shared_ptr<ObjectInstance> parent){
+        this->parent = parent;
+    }
+
     std::string to_string(){
         std::stringstream stream;
         stream << print_detected_class() << print_bounding_box();
@@ -40,21 +47,21 @@ public:
     }
     std::string print_bounding_box(){
         std::stringstream stream;
-        stream << "Bounding Box: (" << xmin << "," << ymin << ") (" << xmax << "," << ymax << ")" << std::endl;
+        stream << "Bounding Box: (" << xmin << "," << ymin << ") (" << xmax << "," << ymax << ")";
         return stream.str();
     }
     std::string print_detected_class(){
         std::stringstream stream;
-        stream << "Detected Class: " << get_class() << std::endl;
+        stream << "Detected Class: " << get_class();
         return stream.str();
     }
-    std::string get_class() {return ClassMap::class_map.at(oclass);}
+    std::string get_class() {return ClassMap::get_class(oclass);}
     // Returns true if the class number exists in the class map, and false otherwise.
     // TODO: Move this outside of this class and into ClassMap (static member function)
-    static bool class_exists(int c_num){ return (ClassMap::class_map.find(c_num) != ClassMap::class_map.end()); }
+
     // Gets the class string associated with a class number.
     // TODO: Also move this outside of the class.
-    static std::string get_class(int c_num){ return ClassMap::class_map.at(c_num); }
+
 };
 
 

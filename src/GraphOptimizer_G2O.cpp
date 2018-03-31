@@ -4,7 +4,7 @@
 //
 #define NUM_OF_ITERATIONS 10
 
-#include "../src/GraphOptimizer_G2O.h"
+#include "../include/object_detect/GraphOptimizer_G2O.h"
 
 GraphOptimizer_G20::GraphOptimizer_G20()
 {

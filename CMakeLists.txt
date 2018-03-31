@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(object_detect)
 
+
+set(CMAKE_BUILD_TYPE Debug)
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
@@ -11,20 +13,23 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   roscpp
   sensor_msgs
+  geometry_msgs
   std_msgs
   cv_bridge
 )
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
 ## System dependencies are found with CMake's conventions
+# Find OpenCV 3
 find_package(OpenCV 3 REQUIRED)
-
+# Find Tensorflow C++
 find_package(TensorFlow REQUIRED)
-
 # Find Eigen and Protobuf, which are dependencies for TensorFlow
 find_package(Eigen REQUIRED)
 find_package(Protobuf REQUIRED)
 # Find G2O, which is required for graph optimization
 find_package(G2O REQUIRED)
+# Find PCL, which is used for Point Cloud processing.
+#find_package(PCL REQUIRED)
 
 message(STATUS "MODULE PATH = ${CMAKE_SOURCE_DIR}/cmake/Modules")
 
@@ -134,6 +139,7 @@ include_directories(
         ${Protobuf_INCLUDE_DIRS}
         ${TensorFlow_INCLUDE_DIRS}
         ${G2O_INCLUDE_DIR}
+#        ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -152,25 +158,26 @@ include_directories(
 #add_executable(${PROJECT_NAME}_node src/object_detect_node.cpp src/object_detect_node.h)
 set(SOURCES_LIST
         src/DetectionModel.cpp
-        src/DetectionModel.h
-        src/DetectedObject.h
+        include/object_detect/DetectionModel.h
+        include/object_detect/DetectedObject.h
         src/Memory.cpp
-        src/Memory.h
+        include/object_detect/Memory.h
         src/Type.cpp
-        src/Type.h
+        include/object_detect/Type.h
         src/ClassMap.cpp
-        src/ClassMap.h
-        src/ObjectInstance.cpp
-        src/ObjectInstance.h
-        src/DetectedObject.cpp
-        src/Featurizer.h
+        include/object_detect/ClassMap.h
+        include/object_detect/ObjectInstance.h
+        include/object_detect/Featurizer.h
         src/ORB_Featurizer.cpp
-        src/ORB_Featurizer.h
+        include/object_detect/ORB_Featurizer.h
         src/SURF_Featurizer.cpp
-        src/SURF_Featurizer.h)
-add_executable(object_detect_test src/detection_model_tester.cpp src/detection_model_tester.h ${SOURCES_LIST})
-add_executable(object_detect_node src/object_detect_node.cpp src/object_detect_node.h ${SOURCES_LIST} src/Descriptor.cpp src/Descriptor.h)
-#add_executable(map_publisher_test src/map_publisher_test.h src/map_publisher_test.h src/GraphOptimizer_G2O.cpp src/GraphOptimizer_G2O.h)
+        include/object_detect/SURF_Featurizer.h
+        include/object_detect/DescriptorMatcher.h
+        src/DescriptorMatcher.cpp
+        include/object_detect/Descriptor.h)
+add_executable(object_detect_test src/detection_model_tester.cpp include/object_detect/detection_model_tester.h ${SOURCES_LIST})
+add_executable(object_detect_node src/object_detect_node.cpp include/object_detect/object_detect_node.h ${SOURCES_LIST} )
+add_executable(map_publisher_test include/object_detect/map_publisher_test.h src/map_publisher_test.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -188,6 +195,7 @@ add_executable(object_detect_node src/object_detect_node.cpp src/object_detect_n
          ${OpenCV_LIBS}
          ${Protobuf_LIBRARIES}
          ${TensorFlow_LIBRARIES}
+ #        ${PCL_LIBRARIES}
  )
 target_link_libraries(
         object_detect_test
@@ -197,10 +205,11 @@ target_link_libraries(
         ${TensorFlow_LIBRARIES}
 )
 
-#target_link_libraries(
-#        map_publisher_test
-#        ${G2O_CORE_LIBRARY}
-#)
+target_link_libraries(
+        map_publisher_test
+        ${catkin_LIBRARIES}
+        ${G2O_CORE_LIBRARY}
+)
 
 message(STATUS "TensorFlow Config:")
 message(STATUS "Include: ${TensorFlow_INCLUDE_DIRS}")
@@ -216,6 +225,10 @@ message(STATUS "Libraries: ${Protobuf_LIBRARIES}")
 message(STATUS "G2O Config:")
 message(STATUS "Include: ${G2O_INCLUDE_DIR}")
 message(STATUS "Libraries: ${G2O_CORE_LIBRARY}")
+
+#message(STATUS "PCL Config:")
+#message(STATUS "Include: ${PCL_INCLUDE_DIRS}")
+#message(STATUS "Libraries: ${PCL_LIBRARIES}")
 #############
 ## Install ##
 #############

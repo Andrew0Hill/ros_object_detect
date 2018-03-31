@@ -9,12 +9,13 @@
 #include <memory>
 #include "DetectedObject.h"
 #include "ObjectInstance.h"
+#include "DescriptorMatcher.h"
 #include <rosconsole/macros_generated.h>
 #include <ros/assert.h>
 #include <opencv2/calib3d.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <unordered_map>
-#define NN_THRESH 0.75
-#define INLIERS_THRESH 5
+
 class Type {
 public:
     // ID number to uniquely identify this type.
@@ -26,25 +27,31 @@ public:
     // Boolean value to determine if this type should be used for loop closures.
     bool use_loop_closure;
 
+
     // Static variable to allocate IDs to DetectedObjects in this
     // Type.
     int alloc_id;
 
     std::unordered_map<int,int> desc_map;
-    cv::FlannBasedMatcher matcher = cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,15,2));
+    DescriptorMatcher desc_matcher;
+
+    //cv::FlannBasedMatcher matcher = cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,15,2));
     // TODO: Vector of cv::Mat for each bounded image.
     // Use cv::Mat constructor to just store reference to the cv::Mat
     // inside the DetectedObject
 
-    // TODO: Vector of ObjectInstance for this type.
+
     std::vector<std::shared_ptr<ObjectInstance>> obj_insts;
 
     std::vector<std::shared_ptr<DetectedObject>> objs;
+
+
     // TODO: Vector of Descriptors for this type.
     cv::Mat descriptors;
     // TODO: Vector of cv::KeyPoint for this type.
     // Do we actually need this?
     std::vector<cv::KeyPoint> keypoints;
+
 
 
     // Constructor requires that an ID is specified.

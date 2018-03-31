@@ -15,9 +15,11 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Int32MultiArray.h>
 #include "DetectionModel.h"
 #include "ORB_Featurizer.h"
 #include "Memory.h"
+//#include <pcl-1.7/pcl/registration/icp.h>
 #define MIN_FEATURE_NUM 15
 /*
 +--------+----+----+----+----+------+------+------+------+

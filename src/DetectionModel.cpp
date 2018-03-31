@@ -4,7 +4,7 @@
 
 #include <opencv-3.3.1/opencv2/highgui.hpp>
 #include <opencv-3.3.1/opencv2/features2d.hpp>
-#include "DetectionModel.h"
+#include "../include/object_detect/DetectionModel.h"
 
 void DetectionModel::readModelFromFile(std::string filename) {
     // Read the file from filename into the graphDef and set the status variable

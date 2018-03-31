@@ -2,10 +2,10 @@
 // Created by ros on 3/18/18.
 //
 
-#include "DetectionModel.h"
+#include "../include/object_detect/DetectionModel.h"
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "detection_model_tester.h"
+#include "../include/object_detect/detection_model_tester.h"
 
 int main(){
     // Create a new DetectionModel instance

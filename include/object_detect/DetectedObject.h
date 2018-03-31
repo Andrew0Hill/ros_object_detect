@@ -11,14 +11,18 @@
 #include <iostream>
 #include "ClassMap.h"
 #include "ObjectInstance.h"
+#include "Descriptor.h"
 
 class ObjectInstance;
+
+class Descriptor;
+
 // TODO: Should this replace FeatureImage??
 // Just add members for feature descriptors, image ROI, etc.
 class DetectedObject {
 public:
     // Object class and bounding box coordinates
-    int oclass,ymin,ymax,xmin,xmax;
+    int oclass,ymin,ymax,xmin,xmax,id;
     // Confidence value (0-1) for the detected object.
     float score;
     // Mask for the detected object
@@ -29,9 +33,17 @@ public:
     std::vector<cv::KeyPoint> keypoints;
     // Matrix of descriptors for the image;
     cv::Mat descriptors;
-
+    // Pointer to parent ObjectInstance
     std::shared_ptr<ObjectInstance> parent;
-
+    // Set of pointers to descriptors for this DetectedObject.
+    std::set<std::shared_ptr<Descriptor>> desc_list;
+    // TODO: Left off here.
+    // Maintain a map of descriptor -> Descriptor obj,
+    // or abstract cv::Mat of descriptors and keypoints out entirely?
+    // If abstracting out, would there be performance hit from adding
+    // descriptors to KD-Tree one-by-one from Descriptor objects?
+    // Can we add descriptors in batch but retain individuals Descriptor
+    // objects?
 
     DetectedObject(int c_num){
         oclass = c_num;

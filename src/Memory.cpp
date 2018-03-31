@@ -2,7 +2,7 @@
 // Created by ros on 3/19/18.
 //
 
-#include "Memory.h"
+#include "../include/object_detect/Memory.h"
 
 void Memory::match(std::shared_ptr<DetectedObject> object) {
     // If this type has not been seen before in the dicionary:

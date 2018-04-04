@@ -8,19 +8,31 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <image_transport/image_transport.h>
 #include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/subscriber.h>
 #include <iostream>
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int32MultiArray.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include "DetectionModel.h"
 #include "ORB_Featurizer.h"
 #include "Memory.h"
+#include <uchar.h>
+#include <pcl/point_cloud.h>
+#include <pcl/common/impl/centroid.hpp>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/point_types.h>
+#include <pcl_ros/point_cloud.h>
+#include <signal.h>
 //#include <pcl-1.7/pcl/registration/icp.h>
-#define MIN_FEATURE_NUM 15
+#define MIN_FEATURE_NUM 20
 /*
 +--------+----+----+----+----+------+------+------+------+
 |        | C1 | C2 | C3 | C4 | C(5) | C(6) | C(7) | C(8) |
@@ -34,6 +46,8 @@
 | CV_64F |  6 | 14 | 22 | 30 |   38 |   46 |   54 |   62 |
 +--------+----+----+----+----+------+------+------+------+
  */
-void frame_callback(const sensor_msgs::ImageConstPtr& rgb, const sensor_msgs::ImageConstPtr& depth);
-
+void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud);
+void point_cloud_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud);
+void print_instances_thread();
+void on_sigint(int code);
 #endif //OBJECT_DETECT_NODE_H

@@ -4,6 +4,7 @@
 
 
 #include <ros/assert.h>
+#include <opencv-3.3.1/opencv2/highgui.hpp>
 #include "../include/object_detect/DescriptorMatcher.h"
 
 /*
@@ -69,16 +70,44 @@ bool DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
         get_descriptors(filtered_train_indices, matched_descriptors);
         // Get the best image match for this set of descriptors.
         std::vector<std::shared_ptr<Descriptor>> filtered_descriptors;
+
+
+        std::vector<int> filtered_indices;
+
         // TODO: Replace this with weighting scheme (TF-IDF?) so that common features don't throw off the match.
-        best_obj = get_best_img_match(matched_descriptors,filtered_descriptors);
+        best_obj = get_best_img_match(matched_descriptors,filtered_descriptors,filtered_indices);
+
         float update_val = 1 - ((float)filtered_descriptors.size() / best_obj->descriptors.rows);
         std::cout << "Update Rate: " << update_val << std::endl;
+
         // Vector of matched keypoint for each Descriptor in matched_descriptors.
         std::vector<cv::KeyPoint> matched_keypoints;
         // Get the image KeyPoints for each Descriptor, and put them in matched_keypoints.
         get_img_keypoints(best_obj, filtered_descriptors, matched_keypoints);
 
-        num_of_inliers = get_inliers(matched_keypoints, filtered_query_keypoints);
+        std::vector<cv::KeyPoint> matched_query_keypoints;
+        for (int i = 0; i < filtered_indices.size(); ++i){
+            matched_query_keypoints.push_back(filtered_query_keypoints[filtered_indices[i]]);
+        }
+
+        num_of_inliers = get_inliers(matched_keypoints, matched_query_keypoints);
+
+        if(num_of_inliers > INLIERS_THRESH){
+        #ifdef DRAW_MATCHED_IMAGES
+            std::vector<cv::DMatch> matches;
+            for(int i = 0; i < matched_keypoints.size(); ++i){
+                cv::DMatch temp;
+                temp.trainIdx = i;
+                temp.queryIdx = i;
+                matches.push_back(temp);
+
+            }
+            cv::Mat out_img;
+            cv::drawMatches(obj->image,matched_query_keypoints,best_obj->image,matched_keypoints,matches,out_img);
+            cv::imshow("images", out_img);
+            cv::waitKey(3);
+        #endif
+        }
         ROS_INFO_STREAM("Updated " << matched_descriptors.size() << " existing descriptors");
         add_reference(matched_descriptors, obj, filtered_query_keypoints);
         ROS_INFO("Finished Adding References.");
@@ -94,6 +123,7 @@ bool DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
     if(num_of_inliers > INLIERS_THRESH){
         ROS_INFO("Enough Inliers to match!");
         obj->set_parent(best_obj->parent);
+        best_obj->parent->add_image(obj);
         return true;
     }
 
@@ -245,7 +275,8 @@ void DescriptorMatcher::get_descriptors(std::vector<int> &indices, std::vector<s
 
 std::shared_ptr<DetectedObject>
 DescriptorMatcher::get_best_img_match(std::vector<std::shared_ptr<Descriptor>> &descriptors,
-                                      std::vector<std::shared_ptr<Descriptor>> &filtered_descriptors) {
+                                      std::vector<std::shared_ptr<Descriptor>> &filtered_descriptors,
+                                      std::vector<int> &filtered_indices) {
     std::unordered_map<std::shared_ptr<DetectedObject>, std::pair<int, std::vector<int>>> match_occurrences;
     // Iterate each descriptor
     for(int i = 0; i < descriptors.size(); ++i){
@@ -277,6 +308,7 @@ DescriptorMatcher::get_best_img_match(std::vector<std::shared_ptr<Descriptor>> &
     }
     for(int i = 0; i < match_occurrences[best_obj].second.size(); ++i){
         filtered_descriptors.push_back(descriptors[match_occurrences[best_obj].second[i]]);
+        filtered_indices.push_back(match_occurrences[best_obj].second[i]);
     }
 
     return best_obj;

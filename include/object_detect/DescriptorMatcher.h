@@ -4,8 +4,9 @@
 
 #ifndef OBJECT_DETECT_DESCRIPTORLIST_H
 #define OBJECT_DETECT_DESCRIPTORLIST_H
-#define INLIERS_THRESH 5
+#define INLIERS_THRESH 7
 #define NN_THRESH 0.75
+//#define DRAW_MATCHED_IMAGES
 // Class that wraps a set of descriptors for a Type.
 
 #include <map>
@@ -37,7 +38,7 @@ private:
 
     void get_descriptors(std::vector<int> &indices, std::vector<std::shared_ptr<Descriptor>> &out_vec);
 
-    std::shared_ptr<DetectedObject> get_best_img_match(std::vector<std::shared_ptr<Descriptor>> &descriptors, std::vector<std::shared_ptr<Descriptor>> &filtered_descriptors);
+    std::shared_ptr<DetectedObject> get_best_img_match(std::vector<std::shared_ptr<Descriptor>> &descriptors, std::vector<std::shared_ptr<Descriptor>> &filtered_descriptors, std::vector<int> &filtered_indices);
 
     void get_img_keypoints(std::shared_ptr<DetectedObject> obj, std::vector<std::shared_ptr<Descriptor>> descriptors, std::vector<cv::KeyPoint> &keypoints);
 

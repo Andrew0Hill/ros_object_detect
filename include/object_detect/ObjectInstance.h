@@ -12,11 +12,11 @@
 #include "DetectedObject.h"
 class DetectedObject;
 class ObjectInstance {
+public:
     // ID to uniquely represent this object within its Type.
     int oid;
     // Vector of DetectedObject instances for this ObjectInstance.
     std::vector<std::shared_ptr<DetectedObject>> images;
-public:
     ObjectInstance(int id, std::shared_ptr<DetectedObject> obj_ptr){
         oid = id;
         images.push_back(obj_ptr);

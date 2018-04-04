@@ -29,7 +29,7 @@ find_package(Protobuf REQUIRED)
 # Find G2O, which is required for graph optimization
 find_package(G2O REQUIRED)
 # Find PCL, which is used for Point Cloud processing.
-#find_package(PCL REQUIRED)
+find_package(PCL REQUIRED)
 
 message(STATUS "MODULE PATH = ${CMAKE_SOURCE_DIR}/cmake/Modules")
 
@@ -133,13 +133,14 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
+        include/object_detect
         ${catkin_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
         ${Eigen_INCLUDE_DIRS}
         ${Protobuf_INCLUDE_DIRS}
         ${TensorFlow_INCLUDE_DIRS}
         ${G2O_INCLUDE_DIR}
-#        ${PCL_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -158,26 +159,18 @@ include_directories(
 #add_executable(${PROJECT_NAME}_node src/object_detect_node.cpp src/object_detect_node.h)
 set(SOURCES_LIST
         src/DetectionModel.cpp
-        include/object_detect/DetectionModel.h
-        include/object_detect/DetectedObject.h
         src/Memory.cpp
-        include/object_detect/Memory.h
         src/Type.cpp
-        include/object_detect/Type.h
         src/ClassMap.cpp
-        include/object_detect/ClassMap.h
-        include/object_detect/ObjectInstance.h
-        include/object_detect/Featurizer.h
         src/ORB_Featurizer.cpp
-        include/object_detect/ORB_Featurizer.h
         src/SURF_Featurizer.cpp
-        include/object_detect/SURF_Featurizer.h
-        include/object_detect/DescriptorMatcher.h
         src/DescriptorMatcher.cpp
-        include/object_detect/Descriptor.h)
-add_executable(object_detect_test src/detection_model_tester.cpp include/object_detect/detection_model_tester.h ${SOURCES_LIST})
-add_executable(object_detect_node src/object_detect_node.cpp include/object_detect/object_detect_node.h ${SOURCES_LIST} )
-add_executable(map_publisher_test include/object_detect/map_publisher_test.h src/map_publisher_test.cpp)
+        )
+add_executable(object_detect_test src/detection_model_tester.cpp ${SOURCES_LIST})
+add_executable(object_detect_node src/object_detect_node.cpp ${SOURCES_LIST} )
+add_executable(map_publisher_test src/map_publisher_test.cpp)
+add_executable(graph_builder src/graph_builder.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -195,7 +188,7 @@ add_executable(map_publisher_test include/object_detect/map_publisher_test.h src
          ${OpenCV_LIBS}
          ${Protobuf_LIBRARIES}
          ${TensorFlow_LIBRARIES}
- #        ${PCL_LIBRARIES}
+         ${PCL_LIBRARIES}
  )
 target_link_libraries(
         object_detect_test
@@ -209,6 +202,13 @@ target_link_libraries(
         map_publisher_test
         ${catkin_LIBRARIES}
         ${G2O_CORE_LIBRARY}
+)
+
+target_link_libraries(
+        graph_builder
+        ${catkin_LIBRARIES}
+        ${G2O_CORE_LIBRARY}
+        ${PCL_LIBRARIES}
 )
 
 message(STATUS "TensorFlow Config:")
@@ -226,9 +226,9 @@ message(STATUS "G2O Config:")
 message(STATUS "Include: ${G2O_INCLUDE_DIR}")
 message(STATUS "Libraries: ${G2O_CORE_LIBRARY}")
 
-#message(STATUS "PCL Config:")
-#message(STATUS "Include: ${PCL_INCLUDE_DIRS}")
-#message(STATUS "Libraries: ${PCL_LIBRARIES}")
+message(STATUS "PCL Config:")
+message(STATUS "Include: ${PCL_INCLUDE_DIRS}")
+message(STATUS "Libraries: ${PCL_LIBRARIES}")
 #############
 ## Install ##
 #############

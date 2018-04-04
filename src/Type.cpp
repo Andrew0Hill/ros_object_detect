@@ -21,6 +21,7 @@ void Type::match(std::shared_ptr<DetectedObject> object) {
     if(!desc_matcher.match(object) && object->descriptors.rows){
         ROS_INFO("Adding new object instance!");
         std::shared_ptr<ObjectInstance> obj_inst = std::make_shared<ObjectInstance>(allocate_id(),object);
+        object->set_parent(obj_inst);
         obj_insts.push_back(obj_inst);
     }
 

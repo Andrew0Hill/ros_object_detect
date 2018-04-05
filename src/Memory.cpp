@@ -12,4 +12,5 @@ void Memory::match(std::shared_ptr<DetectedObject> object) {
     }
 
     type_dict.at(object->oclass)->match(object);
+
 }

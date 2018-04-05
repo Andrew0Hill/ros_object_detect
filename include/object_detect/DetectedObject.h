@@ -10,6 +10,7 @@
 #include <opencv2/features2d.hpp>
 #include <iostream>
 #include "ClassMap.h"
+#include <Eigen/Core>
 #include "ObjectInstance.h"
 #include "Descriptor.h"
 
@@ -37,13 +38,9 @@ public:
     std::shared_ptr<ObjectInstance> parent;
     // Set of pointers to descriptors for this DetectedObject.
     std::set<std::shared_ptr<Descriptor>> desc_list;
-    // TODO: Left off here.
-    // Maintain a map of descriptor -> Descriptor obj,
-    // or abstract cv::Mat of descriptors and keypoints out entirely?
-    // If abstracting out, would there be performance hit from adding
-    // descriptors to KD-Tree one-by-one from Descriptor objects?
-    // Can we add descriptors in batch but retain individuals Descriptor
-    // objects?
+    // Position in the world frame (/odom right now) of the object.
+    Eigen::Matrix<double,4,1> world_pos;
+
 
     DetectedObject(int c_num){
         oclass = c_num;

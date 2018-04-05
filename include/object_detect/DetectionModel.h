@@ -30,7 +30,7 @@
 
 
 // Use abbreviated namespace name for readability.
-namespace tf = tensorflow;
+//namespace tf = tensorflow;
 class DetectionModel {
 public:
     DetectionModel(std::string model_path=MODEL_PATH,
@@ -46,25 +46,25 @@ public:
 
 private:
     // Holds the current TensorFlow session.
-    tf::Session* session;
+    tensorflow::Session* session;
 
     // Tensor to hold the input image.
-    tf::Tensor image_tensor;
+    tensorflow::Tensor image_tensor;
 
     // cv::Mat mapped to the image_tensor's memory
     cv::Mat image_mat;
 
     // Holds the graph definition for the TensorFlow session.
-    tf::GraphDef graphDef;
+    tensorflow::GraphDef graphDef;
 
     // Vector to hold the results of a Session->run call.
-    std::vector<tf::Tensor> output_tensors;
+    std::vector<tensorflow::Tensor> output_tensors;
 
     int width,height,dims;
 
     // Helper function to filter the results of a Session->run by creating a vector of
     // DetectedObjects only for objects which pass a confidence threshold.
-    std::vector<std::shared_ptr<DetectedObject>> get_valid_objects(std::vector<tf::Tensor> &output_tensors, float thresh = 0.5);
+    std::vector<std::shared_ptr<DetectedObject>> get_valid_objects(std::vector<tensorflow::Tensor> &output_tensors, float thresh = 0.5);
 
     void set_abs_coords(std::shared_ptr<DetectedObject> obj, float* boxes, int row);
 
@@ -75,7 +75,7 @@ private:
     void readModelFromFile(std::string filename);
 
     // Initialize the TF session member with a graph definition.
-    void buildSession(tf::GraphDef graph);
+    void buildSession(tensorflow::GraphDef graph);
 };
 
 

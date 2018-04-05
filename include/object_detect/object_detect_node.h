@@ -21,6 +21,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/shared_mutex.hpp>
+#include <tf2_ros/transform_listener.h>
 #include "DetectionModel.h"
 #include "ORB_Featurizer.h"
 #include "Memory.h"
@@ -48,6 +49,6 @@
  */
 void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud);
 void point_cloud_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud);
-void print_instances_thread();
+void publish_objects_vis();
 void on_sigint(int code);
 #endif //OBJECT_DETECT_NODE_H

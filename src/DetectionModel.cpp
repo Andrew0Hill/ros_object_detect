@@ -8,7 +8,7 @@
 
 void DetectionModel::readModelFromFile(std::string filename) {
     // Read the file from filename into the graphDef and set the status variable
-    tf::Status s = tf::ReadBinaryProto(tf::Env::Default(), filename, &graphDef);
+    tensorflow::Status s = tensorflow::ReadBinaryProto(tensorflow::Env::Default(), filename, &graphDef);
     if(!s.ok()) {
         std::cout << "ERROR: Failed to read frozen graph. " << s.error_message() << std::endl;
         exit(-1);
@@ -17,9 +17,9 @@ void DetectionModel::readModelFromFile(std::string filename) {
 
 void DetectionModel::buildSession(tensorflow::GraphDef graph) {
     // Build the TF session.
-    tf::SessionOptions opt;
-    session = tf::NewSession(opt);
-    tf::Status s = session->Create(graph);
+    tensorflow::SessionOptions opt;
+    session = tensorflow::NewSession(opt);
+    tensorflow::Status s = session->Create(graph);
     if (!s.ok()) {
         std::cout << "ERROR: Failed to create TF session." << s.error_message() << std::endl;
         exit(-1);
@@ -40,7 +40,7 @@ std::vector<std::shared_ptr<DetectedObject>> DetectionModel::detectImage(cv::Mat
     image.convertTo(image_mat,CV_8UC3);
 
     // Run the session. Pass in the image_tensor, and get the results from the operation.
-    tf::Status s = session->Run({std::pair<std::string,tf::Tensor>("image_tensor:0",image_tensor)}, // Input image tensor
+    tensorflow::Status s = session->Run({std::pair<std::string,tensorflow::Tensor>("image_tensor:0",image_tensor)}, // Input image tensor
                  {"detection_boxes:0","detection_scores:0","detection_classes:0","detection_masks:0","num_detections:0"}, // Set output tensors
                  {},
                  &output_tensors); // Vector to hold output tensors.
@@ -65,12 +65,12 @@ DetectionModel::DetectionModel(std::string model_path, int im_width, int im_heig
     // Build the session using the graphDef we read the file into.
     buildSession(graphDef);
     // Set up image_tensor
-    image_tensor = tf::Tensor(tf::DT_UINT8,tf::TensorShape({1,im_height,im_width,im_channels}));
+    image_tensor = tensorflow::Tensor(tensorflow::DT_UINT8,tensorflow::TensorShape({1,im_height,im_width,im_channels}));
     // Set up memory-mapped cv::Mat
-    image_mat = cv::Mat(im_height,im_width,CV_8UC3,image_tensor.flat<tf::uint8>().data());
+    image_mat = cv::Mat(im_height,im_width,CV_8UC3,image_tensor.flat<tensorflow::uint8>().data());
 }
 
-std::vector<std::shared_ptr<DetectedObject>> DetectionModel::get_valid_objects(std::vector<tf::Tensor> &output_tensors, float thresh) {
+std::vector<std::shared_ptr<DetectedObject>> DetectionModel::get_valid_objects(std::vector<tensorflow::Tensor> &output_tensors, float thresh) {
     // Get pointers to each of the Tensor objects.
     float* boxes = output_tensors[0].flat<float>().data();
     float* scores = output_tensors[1].flat<float>().data();

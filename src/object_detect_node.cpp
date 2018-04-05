@@ -10,6 +10,8 @@ std::shared_ptr<DetectionModel> dm;
 ros::Publisher p,markers;
 auto featurizer = std::make_shared<ORB_Featurizer>();
 Memory memory;
+std::shared_ptr<tf2_ros::Buffer> buffer;
+std::shared_ptr<tf2_ros::TransformListener> listener;
 boost::shared_mutex writer_lock;
 boost::shared_mutex memory_lock;
 pcl::PointCloud<pcl::PointXYZ> obj_cloud;
@@ -17,17 +19,14 @@ cv::Mat image;
 
 //pcl::ExtractIndices extractor = pcl::ExtractIndices();
 void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud) {
-    int marker_id = 0;
     // Get image pointer
-    std::vector<visualization_msgs::Marker> marker_vec;
 
     cv_bridge::CvImagePtr  im_ptr = cv_bridge::toCvCopy(rgb);
     std::vector<std::shared_ptr<DetectedObject>> objects;
     std::vector<int> object_vals(27,0);
     // Object detection on image.
     objects = dm->detectImage(im_ptr->image);
-    //extractor.setInputCloud(cloud);
-    //cv::namedWindow("test_window");
+
     // Print out list of objects detected in frame
     for (int i = 0; i < objects.size(); ++i){
         object_vals[ClassMap::get_class_index(objects[i]->oclass)] += 1;
@@ -44,6 +43,7 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
             ROS_INFO_STREAM("Object does not contain enough features! Need: " << MIN_FEATURE_NUM << " Found: " << objects[i]->keypoints.size());
             continue;
         }
+
         std::cout << "Object has: " << objects[i]->descriptors.cols << " columns and: " << objects[i]->descriptors.rows << " rows." << std::endl;
         //std::cout << objects[i] -> descriptors;
         // Get depth image ROI and centroid
@@ -68,41 +68,35 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
         //extractor.filter(obj_indices)
         //pcl::compute3DCentroid()
         ROS_INFO_STREAM("Centroid: " << centroid << " points used: " << num);
+        geometry_msgs::TransformStamped st;
 
-        visualization_msgs::Marker temp_mark;
-        temp_mark.pose.position.x = centroid[0];
-        temp_mark.pose.position.y = centroid[1];
-        temp_mark.pose.position.z = centroid[2];
-        temp_mark.pose.orientation.x = 0.0;
-        temp_mark.pose.orientation.y = 0.0;
-        temp_mark.pose.orientation.z = 0.0;
-        temp_mark.pose.orientation.w = 1.0;
-        temp_mark.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        temp_mark.scale.z = 1.0;
-        temp_mark.scale.x = 1.0;
-        temp_mark.scale.y = 1.0;
-        temp_mark.text = objects[i]->get_class();
-        temp_mark.color.a = 1.0; // Don't forget to set the alpha!
-        temp_mark.color.r = 1.0;
-        temp_mark.color.g = 1.0;
-        temp_mark.color.b = 1.0;
-        temp_mark.header.frame_id = "camera2_depth_optical_frame";
-        temp_mark.header.stamp = ros::Time();
-        temp_mark.lifetime = ros::Duration(0.5);
-        temp_mark.id = marker_id;
+        try {
+            st = buffer->lookupTransform("map", "camera2_depth_optical_frame", ros::Time());
+        }catch(tf2::TransformException &te){
+            ROS_WARN_STREAM(te.what());
+        }
 
-        marker_vec.push_back(temp_mark);
+
+        Eigen::Affine3d eigen_trans(Eigen::Translation3d(st.transform.translation.x,
+                                                         st.transform.translation.y,
+                                                         st.transform.translation.z) *
+                                    Eigen::Quaterniond(st.transform.rotation.w,
+                                                       st.transform.rotation.x,
+                                                       st.transform.rotation.y,
+                                                       st.transform.rotation.z));
+
+        Eigen::Matrix<double,4,1> output_position = eigen_trans * centroid;
+        // Set the position in world space of this object.
+        objects[i]->world_pos = output_position;
+
+
         // Match object into memory.
         ROS_INFO_STREAM("Matching object into Memory...");
         memory_lock.lock();
         memory.match(objects[i]);
         memory_lock.unlock();
-        //std::cout << objects[i]->to_string() << std::endl;
-        marker_id++;
     }
-    visualization_msgs::MarkerArray marker_msg;
-    marker_msg.markers = marker_vec;
-    markers.publish(marker_msg);
+
     std_msgs::String s;
     s.data = "test";
     std_msgs::Int32MultiArray obj_msg;
@@ -110,35 +104,63 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
     p.publish(obj_msg);
     frame_num++;
 }
-void get_one_indices(cv::Mat mask, std::vector<int>& output_vector){
-}
 void point_cloud_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud){
     writer_lock.lock();
     ROS_INFO_STREAM(cloud->width << "  " << cloud->height);
     writer_lock.unlock();
 }
 
-void print_instances_thread(){
+void publish_objects_vis(){
     ROS_WARN("Entered Instances Thread.");
     ros::Rate loop_rate(1);
     // Get the memory lock
     while(ros::ok()) {
+        std::vector<visualization_msgs::Marker> marker_vec;
+        std::hash<std::string> id_gen;
         memory_lock.lock();
         for (auto type_it = memory.type_dict.begin(); type_it != memory.type_dict.end(); ++type_it) {
             for (auto instance_it = type_it->second->obj_insts.begin();
-                 instance_it != type_it->second->obj_insts.end(); ++instance_it) {
-                ROS_INFO_STREAM("Object Type: " << ClassMap::get_class(type_it->second->id) << "ID: "
-                                                << (*instance_it)->get_id());
+                      instance_it != type_it->second->obj_insts.end();
+                      ++instance_it) {
+                std::stringstream obj_strm;
+                obj_strm << (*instance_it)->get_type() << " ID: " << (*instance_it)->get_id();
+                std::string obj_str = obj_strm.str();
+                //ROS_INFO_STREAM("Object Type: " << ClassMap::get_class(type_it->second->id) << "ID: " << (*instance_it)->get_id());
+                visualization_msgs::Marker temp_mark;
+
+                temp_mark.pose.position.x = (*instance_it)->world_pos[0];
+                temp_mark.pose.position.y = (*instance_it)->world_pos[1];
+                temp_mark.pose.position.z = (*instance_it)->world_pos[2];
+                temp_mark.pose.orientation.x = 0.0;
+                temp_mark.pose.orientation.y = 0.0;
+                temp_mark.pose.orientation.z = 0.0;
+                temp_mark.pose.orientation.w = 1.0;
+                temp_mark.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+                temp_mark.scale.z = 0.5;
+                temp_mark.text = obj_str;
+                temp_mark.color.a = 1.0;
+                temp_mark.color.r = 1.0;
+                temp_mark.color.g = 1.0;
+                temp_mark.color.b = 1.0;
+                temp_mark.header.frame_id = "map";
+                temp_mark.header.stamp = ros::Time();
+                temp_mark.lifetime = ros::Duration(1.5);
+                temp_mark.id = id_gen(obj_str);
+                marker_vec.push_back(temp_mark);
             }
         }
         // Release the memory lock
         memory_lock.unlock();
+        visualization_msgs::MarkerArray marker_msg;
+        marker_msg.markers = marker_vec;
+        markers.publish(marker_msg);
         loop_rate.sleep();
     }
     ROS_WARN("Exited Instances Thread.");
 }
 void on_sigint(int code){
     // Dump images associated with each object instance.
+    memory_lock.unlock();
     ROS_INFO("SIGINT received. Dumping images.");
     for (auto type_it = memory.type_dict.begin(); type_it != memory.type_dict.end(); ++type_it) {
         for (auto instance_it = type_it->second->obj_insts.begin();
@@ -158,6 +180,8 @@ void on_sigint(int code){
 int main(int argc, char** argv) {
     // Initialize the ROS node.
     ros::init(argc, argv, "hybrid_matcher", ros::init_options::NoSigintHandler);
+    buffer = std::make_shared<tf2_ros::Buffer>();
+    listener = std::make_shared<tf2_ros::TransformListener>(*buffer);
     ros::NodeHandle node;
     //image_transport::ImageTransport itnode(node);
 
@@ -181,7 +205,7 @@ int main(int argc, char** argv) {
     // Advertise the detected objects topic.
     p = node.advertise<std_msgs::Int32MultiArray>("objects",1);
     markers = node.advertise<visualization_msgs::MarkerArray>("map_objects",1);
-//    boost::thread inst_thread(print_instances_thread);
+    boost::thread inst_thread(publish_objects_vis);
     ros::spin();
 
     cv::destroyAllWindows();

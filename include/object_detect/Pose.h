@@ -15,23 +15,21 @@
 
 class Pose {
 public:
-    static int id;
+    int id;
 
-    Pose(Eigen::Affine3d camera_trans, Eigen::Affine3d world_trans, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud){
-        camera_to_base = camera_trans;
+    Pose(int id, Eigen::Affine3d world_trans, Eigen::Translation3d xyz, ros::Time stamp){
         base_to_world = world_trans;
-        this->cloud = cloud;
+        coords = xyz;
+        timestamp = stamp;
     }
-    bool update_pose(Eigen::Affine3d world_trans){
+    bool update_pose(Eigen::Affine3d world_trans, Eigen::Translation3d xyz){
         base_to_world = world_trans;
+        coords = xyz;
     }
-    // Base to camera transform. This will probably stay constant.
-    Eigen::Affine3d camera_to_base;
     // Transform for representing a base to world transform. This will be optimized on loop closure.
     Eigen::Affine3d base_to_world;
-
-    std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud;
-
+    Eigen::Translation3d coords;
+    ros::Time timestamp;
 };
 
 

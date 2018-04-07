@@ -166,11 +166,11 @@ set(SOURCES_LIST
         src/ORB_Featurizer.cpp
         src/SURF_Featurizer.cpp
         src/DescriptorMatcher.cpp
-        src/PoseGraph.cpp src/PoseGraph.h src/Pose.cpp src/Pose.h src/PoseEdge.cpp src/PoseEdge.h)
+        )
 add_executable(object_detect_test src/detection_model_tester.cpp ${SOURCES_LIST})
 add_executable(object_detect_node src/object_detect_node.cpp ${SOURCES_LIST} )
 add_executable(map_publisher_test src/map_publisher_test.cpp)
-add_executable(graph_builder src/graph_builder.cpp)
+add_executable(graph_builder src/graph_builder.cpp  src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -16,6 +16,7 @@
 #include <pcl_ros/transforms.h>
 #include <pcl/registration/icp.h>
 #include <pcl/filters/filter.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/common/io.h>
 #include <g2o/types/slam2d/types_slam2d.h>
 #include <g2o/core/block_solver.h>

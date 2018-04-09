@@ -25,14 +25,15 @@ public:
         // TF Listener
         listener = std::make_shared<tf2_ros::TransformListener>(*buffer);
     }
-    bool add_vertex(nav_msgs::Odometry odom);
-    bool add_vertex_previous(nav_msgs::Odometry odom);
+    bool add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr);
+    bool add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr);
     void get_prev_transform(Eigen::Affine3d &transform, nav_msgs::Odometry odom);
     void get_graph_markers(std::vector<visualization_msgs::Marker>& markers);
 private:
     int alloc_id = 0;
     std::shared_ptr<tf2_ros::Buffer> buffer;
     std::shared_ptr<tf2_ros::TransformListener> listener;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
 };
 
 

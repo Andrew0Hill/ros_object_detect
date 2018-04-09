@@ -170,8 +170,8 @@ set(SOURCES_LIST
 add_executable(object_detect_test src/detection_model_tester.cpp ${SOURCES_LIST})
 add_executable(object_detect_node src/object_detect_node.cpp ${SOURCES_LIST} )
 add_executable(map_publisher_test src/map_publisher_test.cpp)
-add_executable(graph_builder src/graph_builder.cpp  src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
-
+#add_executable(graph_builder src/graph_builder.cpp  src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
+add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -205,10 +205,16 @@ target_link_libraries(
         ${G2O_CORE_LIBRARY}
 )
 
+#target_link_libraries(
+#        graph_builder
+#        ${catkin_LIBRARIES}
+#        ${G2O_CORE_LIBRARY}
+#       ${PCL_LIBRARIES}
+#)
 target_link_libraries(
-        graph_builder
+        graph_builder_sync
         ${catkin_LIBRARIES}
-        ${G2O_CORE_LIBRARY}
+        ${G20_CORE_LIBRARY}
         ${PCL_LIBRARIES}
 )
 

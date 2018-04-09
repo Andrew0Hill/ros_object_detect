@@ -10,6 +10,9 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/subscriber.h>
 #include <tf/transform_datatypes.h>
 #include <pcl-1.7/pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
@@ -27,5 +30,6 @@ void odom_callback(const nav_msgs::Odometry::ConstPtr &odom_ptr);
 
 void pointcloud_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud);
 
+void graph_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, const nav_msgs::Odometry::ConstPtr& odom);
 void build_graph();
 #endif //OBJECT_DETECT_GRAPH_BUILDER_H

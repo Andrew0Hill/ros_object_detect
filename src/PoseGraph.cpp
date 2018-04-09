@@ -4,7 +4,7 @@
 
 #include "PoseGraph.h"
 
-bool PoseGraph::add_vertex(nav_msgs::Odometry odom){
+bool PoseGraph::add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
 
     Eigen::Translation3d coords(odom.pose.pose.position.x,
                                 odom.pose.pose.position.y,
@@ -21,7 +21,7 @@ bool PoseGraph::add_vertex(nav_msgs::Odometry odom){
     poses.push_back(pose);
 }
 
-bool PoseGraph::add_vertex_previous(nav_msgs::Odometry odom){
+bool PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
 
     Eigen::Translation3d coords(odom.pose.pose.position.x,
                                 odom.pose.pose.position.y,

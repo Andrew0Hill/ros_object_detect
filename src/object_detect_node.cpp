@@ -64,9 +64,7 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
         int size = obj_indices.size();
         Eigen::Matrix<double,4,1> centroid;
         int num = pcl::compute3DCentroid(*cloud,obj_indices,centroid);
-        //extractor.setIndices(objects[i]->mask);
-        //extractor.filter(obj_indices)
-        //pcl::compute3DCentroid()
+
         ROS_INFO_STREAM("Centroid: " << centroid << " points used: " << num);
         geometry_msgs::TransformStamped st;
 
@@ -136,7 +134,7 @@ void publish_objects_vis(){
                 temp_mark.pose.orientation.z = 0.0;
                 temp_mark.pose.orientation.w = 1.0;
                 temp_mark.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-                temp_mark.scale.z = 0.5;
+                temp_mark.scale.z = 0.25;
                 temp_mark.text = obj_str;
                 temp_mark.color.a = 1.0;
                 temp_mark.color.r = 1.0;
@@ -160,7 +158,6 @@ void publish_objects_vis(){
 }
 void on_sigint(int code){
     // Dump images associated with each object instance.
-    memory_lock.unlock();
     ROS_INFO("SIGINT received. Dumping images.");
     for (auto type_it = memory.type_dict.begin(); type_it != memory.type_dict.end(); ++type_it) {
         for (auto instance_it = type_it->second->obj_insts.begin();
@@ -198,9 +195,6 @@ int main(int argc, char** argv) {
     signal(SIGINT, on_sigint);
     // Create a new TF detection model.
     dm = std::make_shared<DetectionModel>();
-
-    //image_transport::Subscriber s = itnode.subscribe("/camera/rgb/image_raw",1,frame_callback);
-    //ros::Subscriber pc_sub = node.subscribe("camera2/cloudXYZ", 1, point_cloud_callback);
 
     // Advertise the detected objects topic.
     p = node.advertise<std_msgs::Int32MultiArray>("objects",1);

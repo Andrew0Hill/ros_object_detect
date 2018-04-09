@@ -19,6 +19,9 @@ ros::Rate* rate;
 ros::Publisher p,graph;
 PoseGraph* poseGraph;
 int main(int argc, char** argv){
+    // Set up ApproximateTimeSync Subscriber for this node.
+    ros::init(argc,argv,"graph_builder");
+    ros::NodeHandle node;
 
     poses_cloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     current_cloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -29,25 +32,28 @@ int main(int argc, char** argv){
     // Initialize the graph_builder node.
     odom_trans = std::make_shared<Eigen::Affine3d>();
     camera_trans = std::make_shared<Eigen::Affine3d>();
-    ros::init(argc,argv,"graph_builder");
     poseGraph = new PoseGraph();
-
-    ros::NodeHandle n;
     buffer = std::make_shared<tf2_ros::Buffer>();
     listener = std::make_shared<tf2_ros::TransformListener>(*buffer);
     rate = new ros::Rate(1);
     // Subscribe to Odometry, and RGBXYZ Point Cloud
-    ros::Subscriber odom_sub = n.subscribe("odom",1,odom_callback);
-    ros::Subscriber pc_sub = n.subscribe("camera2/cloudRGB",1,pointcloud_callback);
+    ros::Subscriber odom_sub = node.subscribe("odom",1,odom_callback);
+    ros::Subscriber pc_sub = node.subscribe("camera2/cloudRGB",1,pointcloud_callback);
     // Publish the stitched cloud
     poses_cloud->header.frame_id = "odom";
 
 
-    p = n.advertise<pcl::PointCloud<pcl::PointXYZRGB>>("full_cloud",1);
-    graph = n.advertise<visualization_msgs::MarkerArray>("graph_nodes",1);
+    p = node.advertise<pcl::PointCloud<pcl::PointXYZRGB>>("full_cloud",1);
+    graph = node.advertise<visualization_msgs::MarkerArray>("graph_nodes",1);
     boost::thread graph_thread(build_graph);
     ros::spin();
 }
+
+void graph_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, const nav_msgs::Odometry::ConstPtr& odom){
+
+}
+
+
 void build_graph(){
     // Read from odometry message.
     while(ros::ok()) {

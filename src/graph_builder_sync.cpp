@@ -6,17 +6,16 @@
 int main(int argc, char** argv) {
     ros::init(argc,argv,"sync_graph_builder");
     SyncGraphBuilder graphBuilder;
-
     ros::spin();
 }
 
 SyncGraphBuilder::SyncGraphBuilder(){
     // Create subscribers
     cloud_sub =  new message_filters::Subscriber<pcl::PointCloud<pcl::PointXYZRGB>>(n,"camera2/cloudRGB/throttled",15);
-    odom_sub = new message_filters::Subscriber<nav_msgs::Odometry>(n,"odom",15);
+    odom_sub = new message_filters::Subscriber<nav_msgs::Odometry>(n,"odom", 200);
 
     // Create synchronized subscriber.
-    synchronizer = new message_filters::Synchronizer<graph_sync_policy>(graph_sync_policy(5),*cloud_sub,*odom_sub);
+    synchronizer = new message_filters::Synchronizer<graph_sync_policy>(graph_sync_policy(50),*cloud_sub,*odom_sub);
 
     // Register the callback with the subscriber.
     synchronizer->registerCallback(boost::bind(&SyncGraphBuilder::graph_callback, this, _1, _2));
@@ -35,14 +34,14 @@ SyncGraphBuilder::SyncGraphBuilder(){
     poses_cloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     // Set ICP parameters.
-    icp_gen.setMaximumIterations(10);
+    icp_gen.setMaximumIterations(30);
     icp_gen.setMaxCorrespondenceDistance(0.05);
     icp_gen.setTransformationEpsilon(1e-8);
     icp_gen.setEuclideanFitnessEpsilon (1);
     icp_gen.setRANSACOutlierRejectionThreshold(1.5);
 
     // Set Voxel Grid parameters.
-    filter_grid.setLeafSize(0.05,0.05,0.05);
+    filter_grid.setLeafSize(0.08,0.08,0.08);
 
 }
 
@@ -62,6 +61,8 @@ void SyncGraphBuilder::graph_callback(const pcl::PointCloud<pcl::PointXYZRGB>::C
     filter_grid.setInputCloud(cloud);
     filter_grid.filter(*voxel_cloud);
 
+    ros::Duration diff = odom->header.stamp - pcl_conversions::fromPCL(cloud->header.stamp);
+    ROS_INFO_STREAM("Diff in time: " << diff.toSec());
     // Lookup transform for point cloud
     geometry_msgs::TransformStamped camera_to_base;
     geometry_msgs::TransformStamped base_to_world;
@@ -103,6 +104,7 @@ void SyncGraphBuilder::graph_callback(const pcl::PointCloud<pcl::PointXYZRGB>::C
         ROS_INFO("Poses cloud is empty. Adding current cloud...");
         *poses_cloud = *voxel_cloud;
         poseGraph->add_vertex(*odom,voxel_cloud);
+
     }else{
         ROS_INFO_STREAM("Adding new pose. Graph has " << poseGraph->poses.size() << " nodes and "
                                                       << poseGraph->edges.size() << " edges.");
@@ -122,11 +124,12 @@ void SyncGraphBuilder::graph_callback(const pcl::PointCloud<pcl::PointXYZRGB>::C
         filter_grid.setInputCloud(poses_cloud);
         filter_grid.filter(*filt_pose_cloud);
         *poses_cloud = *filt_pose_cloud;
+        ROS_INFO_STREAM("Adding pose to graph.");
         poseGraph->add_vertex_previous(*odom,filt_pose_cloud);
     }
     cloud_pub.publish(poses_cloud);
     visualization_msgs::MarkerArray markerArray;
     poseGraph->get_graph_markers(markerArray.markers);
     graph_pub.publish(markerArray);
-
+    poseGraph->write_graph_to_file();
 }

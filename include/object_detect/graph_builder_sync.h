@@ -21,12 +21,11 @@
 #include <pcl/filters/filter.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/io.h>
-#include <g2o/types/slam2d/types_slam2d.h>
-#include <g2o/core/block_solver.h>
-#include <g2o/core/sparse_optimizer.h>
-#include <g2o/core/optimization_algorithm_levenberg.h>
+#include <pcl_conversions/pcl_conversions.h>
 #include <tf2_ros/transform_listener.h>
 #include <PoseGraph.h>
+#include "GraphOptimizer_G2O.h"
+#include <signal.h>
 typedef message_filters::sync_policies::ApproximateTime<pcl::PointCloud<pcl::PointXYZRGB>, nav_msgs::Odometry> graph_sync_policy;
 class SyncGraphBuilder{
 public:
@@ -53,6 +52,8 @@ private:
     pcl::IterativeClosestPoint<pcl::PointXYZRGB,pcl::PointXYZRGB> icp_gen;
     // VoxelGrid for downsampling Point Cloud.
     pcl::VoxelGrid<pcl::PointXYZRGB> filter_grid;
+    // Graph Optimizer
+    GraphOptimizer_G2O optimizer;
     // PoseGraph to hold poses.
     std::shared_ptr<PoseGraph> poseGraph;
 };

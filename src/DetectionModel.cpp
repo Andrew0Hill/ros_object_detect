@@ -68,6 +68,10 @@ DetectionModel::DetectionModel(std::string model_path, int im_width, int im_heig
     image_tensor = tensorflow::Tensor(tensorflow::DT_UINT8,tensorflow::TensorShape({1,im_height,im_width,im_channels}));
     // Set up memory-mapped cv::Mat
     image_mat = cv::Mat(im_height,im_width,CV_8UC3,image_tensor.flat<tensorflow::uint8>().data());
+    // Detect nothing once so we can get the intial load time out of the way now.
+    this->detectImage(image_mat);
+    std::cout << "Network spin-up complete. Ready to predict." << std::endl;
+
 }
 
 std::vector<std::shared_ptr<DetectedObject>> DetectionModel::get_valid_objects(std::vector<tensorflow::Tensor> &output_tensors, float thresh) {

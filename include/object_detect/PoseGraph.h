@@ -12,11 +12,17 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
+#include <g2o/types/slam2d/types_slam2d.h>
+#include <g2o/core/block_solver.h>
+#include <g2o/core/sparse_optimizer.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
 #include <vector>
 #include <visualization_msgs/MarkerArray.h>
+#include "GraphOptimizer_G2O.h"
 #include "PoseEdge.h"
 class PoseGraph {
 public:
+    GraphOptimizer_G2O optimizer;
     std::vector<std::shared_ptr<Pose>> poses;
     std::vector<std::shared_ptr<PoseEdge>> edges;
     PoseGraph(){
@@ -29,6 +35,7 @@ public:
     bool add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr);
     void get_prev_transform(Eigen::Affine3d &transform, nav_msgs::Odometry odom);
     void get_graph_markers(std::vector<visualization_msgs::Marker>& markers);
+    void write_graph_to_file();
 private:
     int alloc_id = 0;
     std::shared_ptr<tf2_ros::Buffer> buffer;

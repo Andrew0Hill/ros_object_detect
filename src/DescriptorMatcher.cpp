@@ -339,7 +339,10 @@ int DescriptorMatcher::get_inliers(std::vector<cv::KeyPoint> &train_kps, std::ve
         train_pts.push_back(train_kps[i].pt);
         query_pts.push_back(query_kps[i].pt);
     }
-
+    // findEssentialMatrix
+    // TODO: Only want to compute relative pose if there are enough inliers in the result of findEssentialMatrix().
+    // TODO: Maybe return the Essential matrix as a parameter to this function so that we can recoverPose() outside this scope.
+    //
     cv::Mat mask = cv::findHomography(train_pts,query_pts);
     return cv::countNonZero(mask);
 }

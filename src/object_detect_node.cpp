@@ -69,7 +69,7 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
         geometry_msgs::TransformStamped st;
 
         try {
-            st = buffer->lookupTransform("map", "camera2_depth_optical_frame", ros::Time());
+            st = buffer->lookupTransform("odom", "camera2_depth_optical_frame", rgb->header.stamp);
         }catch(tf2::TransformException &te){
             ROS_WARN_STREAM(te.what());
         }
@@ -128,7 +128,7 @@ void publish_objects_vis(){
 
                 temp_mark.pose.position.x = (*instance_it)->world_pos[0];
                 temp_mark.pose.position.y = (*instance_it)->world_pos[1];
-                temp_mark.pose.position.z = (*instance_it)->world_pos[2];
+                temp_mark.pose.position.z = (*instance_it)->world_pos[2] + 0.25;
                 temp_mark.pose.orientation.x = 0.0;
                 temp_mark.pose.orientation.y = 0.0;
                 temp_mark.pose.orientation.z = 0.0;
@@ -140,7 +140,7 @@ void publish_objects_vis(){
                 temp_mark.color.r = 1.0;
                 temp_mark.color.g = 1.0;
                 temp_mark.color.b = 1.0;
-                temp_mark.header.frame_id = "map";
+                temp_mark.header.frame_id = "odom";
                 temp_mark.header.stamp = ros::Time();
                 temp_mark.lifetime = ros::Duration(1.5);
                 temp_mark.id = id_gen(obj_str);
@@ -183,12 +183,12 @@ int main(int argc, char** argv) {
     //image_transport::ImageTransport itnode(node);
 
     // Create two message filter subscribers: One for point clouds, and one for Images.
-    message_filters::Subscriber<pcl::PointCloud<pcl::PointXYZRGB>> cloud_sub(node,"/camera2/cloudRGB",1);
-    message_filters::Subscriber<sensor_msgs::Image> image_sub(node, "/camera/rgb/image_raw",1);
+    message_filters::Subscriber<pcl::PointCloud<pcl::PointXYZRGB>> cloud_sub(node,"/camera2/cloudRGB/throttled",10);
+    message_filters::Subscriber<sensor_msgs::Image> image_sub(node, "/camera/rgb/image_raw/throttled",10);
 
     // Create the approximate time synchronizer.
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, pcl::PointCloud<pcl::PointXYZRGB>> frame_sync_policy;
-    message_filters::Synchronizer<frame_sync_policy> synchronizer(frame_sync_policy(5),image_sub,cloud_sub);
+    message_filters::Synchronizer<frame_sync_policy> synchronizer(frame_sync_policy(10),image_sub,cloud_sub);
     synchronizer.registerCallback(boost::bind(&frame_callback,_1,_2));
 
     // Create a custom SIGINT handler, so we can dump images when we shut down the node.

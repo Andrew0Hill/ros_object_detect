@@ -4,7 +4,7 @@
 
 #ifndef OBJECT_DETECT_DESCRIPTORLIST_H
 #define OBJECT_DETECT_DESCRIPTORLIST_H
-#define INLIERS_THRESH 7
+#define INLIERS_THRESH 6
 #define NN_THRESH 0.75
 //#define DRAW_MATCHED_IMAGES
 // Class that wraps a set of descriptors for a Type.

@@ -4,7 +4,7 @@ project(object_detect)
 
 set(CMAKE_BUILD_TYPE Debug)
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -171,7 +171,7 @@ add_executable(object_detect_test src/detection_model_tester.cpp ${SOURCES_LIST}
 add_executable(object_detect_node src/object_detect_node.cpp ${SOURCES_LIST} )
 add_executable(map_publisher_test src/map_publisher_test.cpp)
 #add_executable(graph_builder src/graph_builder.cpp  src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
-add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
+add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -214,7 +214,10 @@ target_link_libraries(
 target_link_libraries(
         graph_builder_sync
         ${catkin_LIBRARIES}
-        ${G20_CORE_LIBRARY}
+        ${G2O_CORE_LIBRARY}
+        ${G2O_SOLVER_EIGEN}
+        ${G2O_TYPES_SLAM2D}
+        ${G2O_STUFF_LIBRARY}
         ${PCL_LIBRARIES}
 )
 

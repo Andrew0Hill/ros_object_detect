@@ -29,7 +29,7 @@ const std::unordered_map<int, std::string> ClassMap::class_map =
                 {76,"keyboard"},
                 {77,"cell phone"},
                 {81,"sink"},
-                {82,"refrigerator"},
+              //  {82,"refrigerator"},
                 {84,"book"},
                 {85,"clock"}
         };

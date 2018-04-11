@@ -17,8 +17,9 @@ class Pose {
 public:
     int id;
 
-    Pose(int id, Eigen::Affine3d world_trans, Eigen::Translation3d xyz, ros::Time stamp){
+    Pose(int id, Eigen::Affine3d world_trans, Eigen::Translation3d xyz, Eigen::Quaterniond rotation, ros::Time stamp){
         base_to_world = world_trans;
+        quat = rotation;
         coords = xyz;
         timestamp = stamp;
     }
@@ -28,6 +29,7 @@ public:
     }
     // Transform for representing a base to world transform. This will be optimized on loop closure.
     Eigen::Affine3d base_to_world;
+    Eigen::Quaterniond quat;
     Eigen::Translation3d coords;
     ros::Time timestamp;
 };

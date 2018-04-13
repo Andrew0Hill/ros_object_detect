@@ -16,7 +16,7 @@
 class DescriptorMatcher {
 public:
     // Returns the best matching ObjectInstance, or a pointer to a new ObjectInstance
-    bool match(std::shared_ptr<DetectedObject>);
+    int match(std::shared_ptr<DetectedObject>);
     DescriptorMatcher(){
         // Set up params for matching based on ORB descriptors (binary descriptors)
         matcher = cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,15,2));

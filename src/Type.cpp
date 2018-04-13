@@ -18,7 +18,7 @@ void Type::match(std::shared_ptr<DetectedObject> object) {
     // Match the descriptors from this object into our descriptor memory.
     //ROS_INFO("Calling DescriptorMatcher.match()");
 
-    if(!desc_matcher.match(object) && object->descriptors.rows){
+    if(desc_matcher.match(object) == 0 && object->descriptors.rows){
         ROS_INFO("Adding new object instance!");
         std::shared_ptr<ObjectInstance> obj_inst = std::make_shared<ObjectInstance>(allocate_id(),object);
         object->set_parent(obj_inst);

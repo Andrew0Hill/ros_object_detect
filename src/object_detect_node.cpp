@@ -69,7 +69,7 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
         geometry_msgs::TransformStamped st;
 
         try {
-            st = buffer->lookupTransform("odom", "camera2_depth_optical_frame", rgb->header.stamp);
+            st = buffer->lookupTransform("odom", "camera2_depth_optical_frame", pcl_conversions::fromPCL(cloud->header.stamp));
         }catch(tf2::TransformException &te){
             ROS_WARN_STREAM(te.what());
         }

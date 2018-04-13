@@ -33,7 +33,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <signal.h>
 //#include <pcl-1.7/pcl/registration/icp.h>
-#define MIN_FEATURE_NUM 20
+#define MIN_FEATURE_NUM 50
 /*
 +--------+----+----+----+----+------+------+------+------+
 |        | C1 | C2 | C3 | C4 | C(5) | C(6) | C(7) | C(8) |

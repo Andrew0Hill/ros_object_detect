@@ -14,7 +14,7 @@
  * Descriptor objects. With this system, we can keep track of how many time a descriptor appears in the tree, and reduce
  * the number of descriptors we need to store.
  */
-bool DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
+int DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
 
     if(this->descriptor_list.cols == 0) {
         ROS_INFO("No Objects in List!, adding all descriptors");
@@ -113,7 +113,8 @@ bool DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
         ROS_INFO("Finished Adding References.");
 
     }else{
-        ROS_ERROR_STREAM("Not Enough Descriptive Features!");
+        ROS_ERROR_STREAM("No Descriptive features for this object! Skipping!");
+        return -1;
     }
     create_descriptors(obj,rejected_query_indices,obj->descriptors,rejected_query_keypoints);
     ROS_INFO_STREAM("Added " << rejected_query_indices.size() << " new descriptors");
@@ -124,11 +125,11 @@ bool DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
         ROS_INFO("Enough Inliers to match!");
         obj->set_parent(best_obj->parent);
         best_obj->parent->add_image(obj);
-        return true;
+        return 1;
     }
 
     ROS_INFO("Not enough inliers to match!");
-    return false;
+    return 0;
     //
 
 /*    ROS_INFO("Creating Map of Occurrences");

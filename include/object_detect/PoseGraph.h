@@ -33,6 +33,7 @@ public:
     }
     std::shared_ptr<Pose> add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr);
     std::shared_ptr<Pose> add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr);
+    bool optimize_graph();
     bool add_edge(std::shared_ptr<Pose> p1, std::shared_ptr<Pose> p2, Eigen::Vector3d relativeTransform, Eigen::Matrix3d covariance, bool loop_closure = false);
     void get_prev_transform(Eigen::Affine3d &transform, nav_msgs::Odometry odom);
     void get_graph_markers(std::vector<visualization_msgs::Marker>& markers);

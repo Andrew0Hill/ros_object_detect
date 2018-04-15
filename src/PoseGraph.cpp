@@ -30,6 +30,24 @@ bool PoseGraph::add_edge(std::shared_ptr<Pose> p1, std::shared_ptr<Pose> p2, Eig
     // Add edge to the optimizer.
     optimizer.addEdge(p1->id,p2->id,relativeTransform,covariance.inverse());
 }
+bool PoseGraph::optimize_graph() {
+    optimizer.optimizeGraph();
+
+    // Get updated poses after optmization
+    for(int i = 0; i < poses.size(); ++i){
+        g2o::SE2 out_pose = optimizer.vertices[i]->estimate();
+        Eigen::Vector3d out_vec(out_pose[0],out_pose[1],out_pose[2]);
+        Eigen::Translation3d coords(out_vec(0),out_vec(1),0.0);
+        Eigen::Quaterniond rotation;
+        rotation = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX()) *
+                   Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX()) *
+                   Eigen::AngleAxisd(out_vec(2),Eigen::Vector3d::UnitZ());
+        Eigen::Affine3d transform(coords * rotation);
+        Eigen::Matrix<double,4,4> old_pose = poses[i]->base_to_world.matrix();
+        poses[i]->update_pose(transform,coords);
+        //ROS_INFO_STREAM("Pose difference: " << poses[i]->base_to_world.matrix() - old_pose);
+    }
+}
 
 std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
 

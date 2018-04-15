@@ -58,6 +58,7 @@ int GraphOptimizer_G2O::addVertex(const Eigen::Vector3d &vertexPose)
 
     // Add to optimizer
     optimizer.addVertex(vc);
+    vertices.push_back(vc);
     ROS_INFO_STREAM("Done.");
     // Update vertex index
     ++vertexIndex;
@@ -75,7 +76,6 @@ void GraphOptimizer_G2O::addEdge(const int fromIndex, const int toIndex, const E
 
     // Relative transformation
     g2o::SE2 relativeTransform(relativePose(0),relativePose(1),relativePose(2));
-
     // Setup Edge
     g2o::EdgeSE2 *edge = new g2o::EdgeSE2;
     edge->vertices()[0] = optimizer.vertex(fromIndex);
@@ -99,6 +99,7 @@ void GraphOptimizer_G2O::addEdge(const int fromIndex, const int toIndex, const E
     //edge->setHuberWidth(0.01);
 
     // Add edge to the optimizer
+    edges.push_back(edge);
     optimizer.addEdge(edge);
 }
 

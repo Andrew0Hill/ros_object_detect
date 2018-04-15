@@ -53,7 +53,7 @@ private:
     // VoxelGrid for downsampling Point Cloud.
     pcl::VoxelGrid<pcl::PointXYZRGB> filter_grid;
     // Graph Optimizer
-    GraphOptimizer_G2O optimizer;
+    //GraphOptimizer_G2O optimizer;
     // PoseGraph to hold poses.
     std::shared_ptr<PoseGraph> poseGraph;
     // Pointer to intermediate stitched cloud.

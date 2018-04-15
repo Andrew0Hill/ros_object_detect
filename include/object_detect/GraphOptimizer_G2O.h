@@ -41,6 +41,8 @@ private:
     SlamLinearSolver sls;
 public:
     GraphOptimizer_G2O();
+    std::vector<g2o::VertexSE2*> vertices;
+    std::vector<g2o::EdgeSE2*> edges;
     int vertexIndex;
     int nextEdgeIndex;
     // Add a new vertex to the graph.

@@ -332,6 +332,9 @@ void ObjectDetector::frame_callback(const sensor_msgs::Image::ConstPtr& rgb,
             icp_gen.setInputTarget(matched_object->pose->cloud);
             icp_gen.setInputSource(pose->cloud);
             icp_gen.align(*aligned_cloud);
+
+
+
             if(icp_gen.hasConverged()) {
                 *pub_cloud = *(pose->cloud);
                 *pub_cloud += *aligned_cloud;
@@ -348,6 +351,7 @@ void ObjectDetector::frame_callback(const sensor_msgs::Image::ConstPtr& rgb,
                         "Relative Transformation: " << relative_trans.matrix() << relative_trans.translation().x()
                                                     << " " << relative_trans.translation().y() << " "
                                                     << relative_trans.rotation().eulerAngles(0, 1, 2)(2));
+                poseGraph->optimize_graph();
             }else{
                 ROS_WARN_STREAM("Could not compute loop closure transformation between poses!");
             }

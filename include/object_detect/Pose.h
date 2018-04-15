@@ -11,6 +11,7 @@
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_cloud.h>
+#include <pcl/common/transforms.h>
 #include <set>
 
 class Pose {
@@ -26,6 +27,12 @@ public:
         cloud = cloud_ptr;
     }
     bool update_pose(Eigen::Affine3d world_trans, Eigen::Translation3d xyz){
+        // Transform the point cloud by the correction between this transformation and the previous
+        // (Update the point cloud's position)
+        Eigen::Affine3d trans_diff = base_to_world.inverse() * world_trans;
+        pcl::transformPointCloud(*cloud,*cloud,trans_diff);
+
+        // Update the coordinates and transformation.
         base_to_world = world_trans;
         coords = xyz;
     }

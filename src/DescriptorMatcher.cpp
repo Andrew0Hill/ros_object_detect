@@ -14,7 +14,7 @@
  * Descriptor objects. With this system, we can keep track of how many time a descriptor appears in the tree, and reduce
  * the number of descriptors we need to store.
  */
-int DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
+int DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj, std::shared_ptr<DetectedObject>& match) {
 
     if(this->descriptor_list.cols == 0) {
         ROS_INFO("No Objects in List!, adding all descriptors");
@@ -114,6 +114,7 @@ int DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
 
     }else{
         ROS_ERROR_STREAM("No Descriptive features for this object! Skipping!");
+        match = NULL;
         return -1;
     }
     create_descriptors(obj,rejected_query_indices,obj->descriptors,rejected_query_keypoints);
@@ -121,140 +122,18 @@ int DescriptorMatcher::match(std::shared_ptr<DetectedObject> obj) {
     ROS_INFO("Finished Creating Descriptors.");
 
 
-    if(num_of_inliers > INLIERS_THRESH){
+    if(num_of_inliers > 15){
         ROS_INFO("Enough Inliers to match!");
         obj->set_parent(best_obj->parent);
         best_obj->parent->add_image(obj);
+        match = best_obj;
         return 1;
     }
 
     ROS_INFO("Not enough inliers to match!");
+    match = NULL;
     return 0;
-    //
 
-/*    ROS_INFO("Creating Map of Occurrences");
-    // Map to count occurrences of descriptors in each DetectedObject (each image).
-    std::unordered_map<std::shared_ptr<DetectedObject>, int> match_occurrences;
-    // Map from DetectedObject pointer to Descriptor pointers, so we can keep track of which
-    // Descriptors were matched after we determine the best DetectedObject.
-    std::multimap<std::shared_ptr<DetectedObject>, std::shared_ptr<Descriptor>> object_to_descs;
-    *//*
-     *
-     *//*
-    // Map the indices of the index to a Descriptor object.
-    ROS_INFO("Getting Descriptors for each matched index.");
-    for (int i = 0; i < filtered_train_indices.size(); ++i) {
-        // Get the Descriptor value associated with this index
-        auto desc_ptr = get_descriptor(filtered_train_indices[i]);
-        // Fail spectacularly if this is null.
-        if (!desc_ptr){
-            std::cout << "Oh Noooooooo!" << std::endl;
-        }
-        // Get iterators into the set of DetectedObject parents for each
-        // Descriptor object we find (Descriptors can have more than one parent).
-        std::set<std::shared_ptr<DetectedObject>>::iterator it;
-        std::set<std::shared_ptr<DetectedObject>>::iterator end;
-        desc_ptr->getParent(it,end);
-        for (it; it != end; ++it){
-            if (match_occurrences.count(*it) == 0) {
-                match_occurrences[*it] = 1;
-            } else {
-                match_occurrences[*it] += 1;
-            }
-            // Create a mapping of DetectedObject -> Descriptor so that we can retrieve
-            // the set of matched descriptors once we've chosen the best matching DetectedObject.
-            object_to_descs.insert(std::pair<std::shared_ptr<DetectedObject>,std::shared_ptr<Descriptor>>(*it,desc_ptr));
-        }
-    }
-
-
-    // Index of the best matched object (best DetectedObject)
-    ROS_INFO("Getting pointer to best DetectedObject");
-    std::shared_ptr<DetectedObject> best_obj;
-    int best_val = 0;
-    // Get the best image index.
-    for (auto it = match_occurrences.begin(); it != match_occurrences.end(); ++it) {
-        if (it->second > best_val) {
-            best_obj = it->first;
-            best_val = it->second;
-        }
-    }
-    ROS_INFO("Getting range of best object descriptors.");
-    // Get the iterator to the list of Descriptor objects for the best object.
-    auto desc_range = object_to_descs.equal_range(best_obj);
-
-
-    // Verify that the feature sets actually match. Use RANSAC to verify geometric correspondence between
-    // images.
-    // TODO: this is where we should change findHomography to findFundamentalMatrix or some other method.
-
-    // We have a pointer to the DetectedObject, and each matched Descriptor object.
-    // We can get the set of keypoints for matching by using the map field inside each Descriptor,
-    // which matches a DetectedObject pointer to a KeyPoint pointer.
-
-    ROS_INFO("Getting matched keypoints from each pointer.");
-    std::vector<cv::Point2f> matched_keypoints;
-    if(desc_range.first == object_to_descs.end())
-        ROS_WARN("desc_range has no members!");
-    for (auto desc_it = desc_range.first; desc_it != desc_range.second; ++ desc_it){
-        auto det_obj_ptr = desc_it->first;
-        auto desc_ptr = desc_it->second;
-        // Add the KeyPoint for this Descriptor that occurred in the
-        // DetectedObject det_obj_ptr.
-        matched_keypoints.push_back((desc_ptr->getKeyPoint(det_obj_ptr))->pt);
-    }
-
-    ROS_INFO_STREAM("Best match is " << best_obj->parent->get_id() << " with " << best_val << " matches.");
-
-    cv::Mat mask;
-    // Get the homography matrix for the transformation between the two sets of points.
-    mask = cv::findHomography(matched_keypoints,filtered_query_points);
-
-    // Return the pointer to the ObjectInstance that we matched
-    if(cv::countNonZero(mask) > INLIERS_THRESH){
-        ROS_INFO_STREAM("Enough inliers to match! found " << cv::countNonZero(mask) << " inliers!");
-
-        // Add all matched descriptors from the query image to the corresponding Descriptor instances and update
-        // the parents.
-        // For each low-level descriptor from the query image that wasn't in the matched list.
-            // 1. Create new Descriptor
-            // 2. Descriptor.addParent(DetectedObject, KeyPoint)
-        for(int i = 0; i < obj->descriptors.rows; ++i){
-            // If this descriptor is not a matched descriptor, i.e. a New Descriptor.
-            if(std::find(filtered_query_indices.begin(),filtered_query_indices.end(),i) == filtered_query_indices.end()){
-                ROS_INFO("Creating new Descriptor");
-                // Make a new Descriptor that has the query DetectedObject as a parent,
-                // and the query's KeyPoint as a keypoint.
-                std::shared_ptr<Descriptor> desc_ptr = std::make_shared<Descriptor>();
-                desc_ptr->addParent(obj,std::make_shared<cv::KeyPoint>(obj->keypoints[i]));
-                // Register new Descriptor with the DescriptorMatcher's list and map.
-                descriptor_list.push_back(obj->descriptors.row(i));
-                descriptor_map[obj->descriptors.rows-1] = desc_ptr;
-            }
-            // If this was a matched descriptor, then update the Descriptor we matched so that the query
-            // DetectedObject is a parent to the descriptor.
-            else{
-
-            }
-        }
-        return best_obj->parent;
-    }
-
-    // Otherwise, we need to create a new ObjectInstance and return a pointer to it.
-    ROS_INFO_STREAM("Not enough inliers to perform object match! Need " << INLIERS_THRESH << " inliers but only found " << cv::countNonZero(mask));
-    ROS_INFO_STREAM("Creating new ObjectInstance and adding to Memory.");
-    std::shared_ptr<ObjectInstance> new_inst = std::make_shared<ObjectInstance>(1,obj);
-
-    for (int i = 0; i < obj->descriptors.rows; ++i){
-        std::shared_ptr<Descriptor> desc_ptr = std::make_shared<Descriptor>();
-        desc_ptr->addParent(obj,std::make_shared<cv::KeyPoint>(obj->keypoints[i]));
-
-        descriptor_list.push_back()
-
-
-
-    }
-    return nullptr;*/
 }
 
 std::shared_ptr<Descriptor> DescriptorMatcher::get_descriptor(int index) {
@@ -344,7 +223,10 @@ int DescriptorMatcher::get_inliers(std::vector<cv::KeyPoint> &train_kps, std::ve
     // TODO: Only want to compute relative pose if there are enough inliers in the result of findEssentialMatrix().
     // TODO: Maybe return the Essential matrix as a parameter to this function so that we can recoverPose() outside this scope.
     //
-    cv::Mat mask = cv::findHomography(train_pts,query_pts);
+    //cv::Mat mask = cv::findHomography(train_pts,query_pts,CV_RANSAC);
+    cv::Mat mask;
+    cv::findHomography(train_pts,query_pts,CV_RANSAC,3,mask);
+    //cv::findFundamentalMat(train_pts,query_pts,CV_FM_RANSAC,3.0,0.99,mask);
     return cv::countNonZero(mask);
 }
 

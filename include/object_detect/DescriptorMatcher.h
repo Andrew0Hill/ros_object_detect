@@ -4,7 +4,7 @@
 
 #ifndef OBJECT_DETECT_DESCRIPTORLIST_H
 #define OBJECT_DETECT_DESCRIPTORLIST_H
-#define INLIERS_THRESH 6
+#define INLIERS_THRESH 25
 #define NN_THRESH 0.75
 //#define DRAW_MATCHED_IMAGES
 // Class that wraps a set of descriptors for a Type.
@@ -16,7 +16,7 @@
 class DescriptorMatcher {
 public:
     // Returns the best matching ObjectInstance, or a pointer to a new ObjectInstance
-    int match(std::shared_ptr<DetectedObject>);
+    int match(std::shared_ptr<DetectedObject>,std::shared_ptr<DetectedObject>&);
     DescriptorMatcher(){
         // Set up params for matching based on ORB descriptors (binary descriptors)
         matcher = cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,15,2));

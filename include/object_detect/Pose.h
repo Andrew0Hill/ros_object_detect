@@ -17,11 +17,13 @@ class Pose {
 public:
     int id;
 
-    Pose(int id, Eigen::Affine3d world_trans, Eigen::Translation3d xyz, Eigen::Quaterniond rotation, ros::Time stamp){
+    Pose(int nid, Eigen::Affine3d world_trans, Eigen::Translation3d xyz, Eigen::Quaterniond rotation, ros::Time stamp, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
+        id = nid;
         base_to_world = world_trans;
         quat = rotation;
         coords = xyz;
         timestamp = stamp;
+        cloud = cloud_ptr;
     }
     bool update_pose(Eigen::Affine3d world_trans, Eigen::Translation3d xyz){
         base_to_world = world_trans;
@@ -31,6 +33,7 @@ public:
     Eigen::Affine3d base_to_world;
     Eigen::Quaterniond quat;
     Eigen::Translation3d coords;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
     ros::Time timestamp;
 };
 

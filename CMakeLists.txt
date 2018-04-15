@@ -166,12 +166,13 @@ set(SOURCES_LIST
         src/ORB_Featurizer.cpp
         src/SURF_Featurizer.cpp
         src/DescriptorMatcher.cpp
-        )
-add_executable(object_detect_test src/detection_model_tester.cpp ${SOURCES_LIST})
-add_executable(object_detect_node src/object_detect_node.cpp ${SOURCES_LIST} )
-add_executable(map_publisher_test src/map_publisher_test.cpp)
+        src/ObjectMatcher.cpp)
+#add_executable(object_detect_test src/detection_model_tester.cpp ${SOURCES_LIST})
+#add_executable(object_detect_node src/object_detect_node.cpp ${SOURCES_LIST} )
+#add_executable(map_publisher_test src/map_publisher_test.cpp)
 #add_executable(graph_builder src/graph_builder.cpp  src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
-add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp)
+add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp )
+add_executable(object_detect_sync src/object_detect_node_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp ${SOURCES_LIST})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -183,27 +184,27 @@ add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp s
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(
-         ${PROJECT_NAME}_node
-         ${catkin_LIBRARIES}
-         ${OpenCV_LIBS}
-         ${Protobuf_LIBRARIES}
-         ${TensorFlow_LIBRARIES}
-         ${PCL_LIBRARIES}
- )
-target_link_libraries(
-        object_detect_test
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${Protobuf_LIBRARIES}
-        ${TensorFlow_LIBRARIES}
-)
+# target_link_libraries(
+#         ${PROJECT_NAME}_node
+#         ${catkin_LIBRARIES}
+#         ${OpenCV_LIBS}
+#         ${Protobuf_LIBRARIES}
+#         ${TensorFlow_LIBRARIES}
+#        ${PCL_LIBRARIES}
+# )
+#target_link_libraries(
+#        object_detect_test
+#        ${catkin_LIBRARIES}
+#        ${OpenCV_LIBS}
+#        ${Protobuf_LIBRARIES}
+#        ${TensorFlow_LIBRARIES}
+#)
 
-target_link_libraries(
-        map_publisher_test
-        ${catkin_LIBRARIES}
-        ${G2O_CORE_LIBRARY}
-)
+#target_link_libraries(
+#        map_publisher_test
+#        ${catkin_LIBRARIES}
+#        ${G2O_CORE_LIBRARY}
+#)
 
 #target_link_libraries(
 #        graph_builder
@@ -220,7 +221,18 @@ target_link_libraries(
         ${G2O_STUFF_LIBRARY}
         ${PCL_LIBRARIES}
 )
-
+target_link_libraries(
+        object_detect_sync
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${Protobuf_LIBRARIES}
+        ${TensorFlow_LIBRARIES}
+        ${G2O_CORE_LIBRARY}
+        ${G2O_SOLVER_EIGEN}
+        ${G2O_TYPES_SLAM2D}
+        ${G2O_STUFF_LIBRARY}
+        ${PCL_LIBRARIES}
+)
 message(STATUS "TensorFlow Config:")
 message(STATUS "Include: ${TensorFlow_INCLUDE_DIRS}")
 message(STATUS "Libraries: ${TensorFlow_LIBRARIES}")

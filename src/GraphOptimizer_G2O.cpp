@@ -84,6 +84,7 @@ void GraphOptimizer_G2O::addEdge(const int fromIndex, const int toIndex, const E
     // Edge ID
     edge->setId(nextEdgeIndex);
     ++nextEdgeIndex;
+
     ROS_INFO_STREAM("Done adding edge.");
     // setMeasurement takes a SE2 object relativeTransform
     edge->setMeasurementFromState();

@@ -12,6 +12,7 @@
 #include "ClassMap.h"
 #include <Eigen/Core>
 #include "ObjectInstance.h"
+#include "Pose.h"
 #include "Descriptor.h"
 
 class ObjectInstance;
@@ -36,6 +37,8 @@ public:
     cv::Mat descriptors;
     // Pointer to parent ObjectInstance
     std::shared_ptr<ObjectInstance> parent;
+    // Pose where this object was detected.
+    std::shared_ptr<Pose> pose;
     // Set of pointers to descriptors for this DetectedObject.
     std::set<std::shared_ptr<Descriptor>> desc_list;
     // Position in the world frame (/odom right now) of the object.

@@ -2,6 +2,7 @@
 // Created by ros on 3/1/18.
 //
 
+#include <nav_msgs/Odometry.h>
 #include "../include/object_detect/object_detect_node.h"
 
 
@@ -18,7 +19,7 @@ pcl::PointCloud<pcl::PointXYZ> obj_cloud;
 cv::Mat image;
 
 //pcl::ExtractIndices extractor = pcl::ExtractIndices();
-void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud) {
+void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, const nav_msgs::Odometry::ConstPtr& odom) {
     // Get image pointer
 
     cv_bridge::CvImagePtr  im_ptr = cv_bridge::toCvCopy(rgb);
@@ -87,11 +88,11 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
         // Set the position in world space of this object.
         objects[i]->world_pos = output_position;
 
-
+        std::shared_ptr<DetectedObject> FIX_THIS_LATER;
         // Match object into memory.
         ROS_INFO_STREAM("Matching object into Memory...");
         memory_lock.lock();
-        memory.match(objects[i]);
+        memory.match(objects[i], FIX_THIS_LATER);
         memory_lock.unlock();
     }
 
@@ -102,12 +103,6 @@ void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointClo
     p.publish(obj_msg);
     frame_num++;
 }
-void point_cloud_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud){
-    writer_lock.lock();
-    ROS_INFO_STREAM(cloud->width << "  " << cloud->height);
-    writer_lock.unlock();
-}
-
 void publish_objects_vis(){
     ROS_WARN("Entered Instances Thread.");
     ros::Rate loop_rate(1);
@@ -185,11 +180,11 @@ int main(int argc, char** argv) {
     // Create two message filter subscribers: One for point clouds, and one for Images.
     message_filters::Subscriber<pcl::PointCloud<pcl::PointXYZRGB>> cloud_sub(node,"/camera2/cloudRGB/throttled",10);
     message_filters::Subscriber<sensor_msgs::Image> image_sub(node, "/camera/rgb/image_raw/throttled",10);
-
+    message_filters::Subscriber<nav_msgs::Odometry> odom_sub(node, "/odom",200);
     // Create the approximate time synchronizer.
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, pcl::PointCloud<pcl::PointXYZRGB>> frame_sync_policy;
-    message_filters::Synchronizer<frame_sync_policy> synchronizer(frame_sync_policy(10),image_sub,cloud_sub);
-    synchronizer.registerCallback(boost::bind(&frame_callback,_1,_2));
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, pcl::PointCloud<pcl::PointXYZRGB>, nav_msgs::Odometry> frame_sync_policy;
+    message_filters::Synchronizer<frame_sync_policy> synchronizer(frame_sync_policy(50),image_sub,cloud_sub,odom_sub);
+    synchronizer.registerCallback(boost::bind(&frame_callback,_1,_2,_3));
 
     // Create a custom SIGINT handler, so we can dump images when we shut down the node.
     signal(SIGINT, on_sigint);

@@ -47,8 +47,7 @@
 | CV_64F |  6 | 14 | 22 | 30 |   38 |   46 |   54 |   62 |
 +--------+----+----+----+----+------+------+------+------+
  */
-void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud);
-void point_cloud_callback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud);
+void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, const nav_msgs::Odometry::ConstPtr& odom);
 void publish_objects_vis();
 void on_sigint(int code);
 #endif //OBJECT_DETECT_NODE_H

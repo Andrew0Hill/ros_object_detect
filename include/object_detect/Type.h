@@ -9,13 +9,14 @@
 #include <memory>
 #include "DetectedObject.h"
 #include "ObjectInstance.h"
+#include "ObjectMatcher.h"
 #include "DescriptorMatcher.h"
 #include <rosconsole/macros_generated.h>
 #include <ros/assert.h>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <unordered_map>
-
+#define FULL_MATCHING
 class Type {
 public:
     // ID number to uniquely identify this type.
@@ -33,18 +34,12 @@ public:
     int alloc_id;
 
     std::unordered_map<int,int> desc_map;
+
     DescriptorMatcher desc_matcher;
-
-    //cv::FlannBasedMatcher matcher = cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,15,2));
-    // TODO: Vector of cv::Mat for each bounded image.
-    // Use cv::Mat constructor to just store reference to the cv::Mat
-    // inside the DetectedObject
-
-
+    ObjectMatcher obj_matcher;
     std::vector<std::shared_ptr<ObjectInstance>> obj_insts;
 
     std::vector<std::shared_ptr<DetectedObject>> objs;
-
 
     // TODO: Vector of Descriptors for this type.
     cv::Mat descriptors;
@@ -66,7 +61,7 @@ public:
 
     // Function to match a given DetectedObject against all of the
     // DetectedObject instances in this type.
-    void match(std::shared_ptr<DetectedObject> object);
+    void match(std::shared_ptr<DetectedObject> object, std::shared_ptr<DetectedObject>& match);
 
     // Function to add a new ObjectInstance to this type.
     void add_new_obj(std::shared_ptr<DetectedObject> object);

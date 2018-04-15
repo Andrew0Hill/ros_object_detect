@@ -4,7 +4,7 @@
 
 #include "PoseGraph.h"
 
-bool PoseGraph::add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
+std::shared_ptr<Pose> PoseGraph::add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
 
     Eigen::Translation3d coords(odom.pose.pose.position.x,
                                 odom.pose.pose.position.y,
@@ -16,12 +16,17 @@ bool PoseGraph::add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXY
     Eigen::Affine3d world_transform(coords * rotation);
 
 
-    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,world_transform,coords,rotation, odom.header.stamp);
+    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,world_transform,coords,rotation, odom.header.stamp,cloud_ptr);
     optimizer.addVertex(coords.vector());
     poses.push_back(pose);
+    return pose;
 }
 
-bool PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
+bool PoseGraph::add_edge(std::shared_ptr<Pose> p1, std::shared_ptr<Pose> p2){
+    //optimizer.addEdge(p1->id,p2->id);
+}
+
+std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
 
     Eigen::Translation3d coords(odom.pose.pose.position.x,
                                 odom.pose.pose.position.y,
@@ -44,7 +49,7 @@ bool PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl
     covariance(2,2) = odom.pose.covariance[35];*/
     ROS_INFO_STREAM("Covariance matrix: " << covariance);
     // Make a new pose
-    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,world_transform,coords,rotation, odom.header.stamp);
+    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,world_transform,coords,rotation, odom.header.stamp,cloud_ptr);
     int prev_edge_ind = optimizer.vertexIndex - 1;
     int curr_edge_ind = optimizer.vertexIndex;
     auto theta = rotation.toRotationMatrix().eulerAngles(0,1,2)(2);
@@ -65,7 +70,7 @@ bool PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl
     poses.push_back(pose);
     edges.push_back(edge);
 
-    return true;
+    return pose;
 }
 
 void PoseGraph::get_graph_markers(std::vector<visualization_msgs::Marker> &markers) {

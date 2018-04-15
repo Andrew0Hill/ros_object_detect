@@ -18,7 +18,7 @@ public:
     // Function to add a new Type instance to the map.
     void add_type(int tid){ type_dict.insert({tid, std::make_shared<Type>(tid)}); }
     // Function to match a
-    void match(std::shared_ptr<DetectedObject> object);
+    void match(std::shared_ptr<DetectedObject> object, std::shared_ptr<DetectedObject>& match);
 };
 
 

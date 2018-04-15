@@ -17,20 +17,23 @@ int ObjectMatcher::match_object(std::shared_ptr<DetectedObject> target, std::sha
     // Vectors for query and train keypoints.
     std::vector<cv::Point2f> train_pts;
     std::vector<cv::Point2f> query_pts;
+    ROS_WARN_STREAM("Entering Loop");
     for(it; it != cand->images.end(); ++it){
         matches.clear();
         filtered_matches.clear();
         train_pts.clear();
         query_pts.clear();
         // KNN match with K = 2.
+        ROS_WARN_STREAM("Dereferencing Iterator");
         matcher.knnMatch(target->descriptors,(*it)->descriptors,matches,2);
         // Use NNDR to filter out bad matches.
+        //ROS_WARN_STREAM("Finished Dereferencing Iterator");
         for (int i = 0; i < matches.size(); ++i){
-            if(matches[i].size() == 2 && matches[i][0].distance < matches[1][0].distance * NN_THRESH){
+            if(matches[i].size() == 2 && matches[i][0].distance < matches[i][1].distance * NN_THRESH){
                 filtered_matches.push_back(matches[i][0]);
             }
         }
-
+        ROS_WARN_STREAM("Getting keypoints.");
         for(int j = 0; j < filtered_matches.size(); ++j){
             query_pts.push_back(target->keypoints[filtered_matches[j].queryIdx].pt);
             train_pts.push_back((*it)->keypoints[filtered_matches[j].trainIdx].pt);

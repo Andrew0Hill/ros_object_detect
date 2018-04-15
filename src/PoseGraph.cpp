@@ -22,8 +22,13 @@ std::shared_ptr<Pose> PoseGraph::add_vertex(nav_msgs::Odometry odom, pcl::PointC
     return pose;
 }
 
-bool PoseGraph::add_edge(std::shared_ptr<Pose> p1, std::shared_ptr<Pose> p2){
-    //optimizer.addEdge(p1->id,p2->id);
+bool PoseGraph::add_edge(std::shared_ptr<Pose> p1, std::shared_ptr<Pose> p2, Eigen::Vector3d relativeTransform, Eigen::Matrix3d covariance, bool loop_closure){
+    // Add edge to the list (for visualization)
+    std::shared_ptr<PoseEdge> edge = std::make_shared<PoseEdge>(p1,p2,loop_closure);
+    edge->information = covariance.inverse();
+    edges.push_back(edge);
+    // Add edge to the optimizer.
+    optimizer.addEdge(p1->id,p2->id,relativeTransform,covariance.inverse());
 }
 
 std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
@@ -77,7 +82,7 @@ void PoseGraph::get_graph_markers(std::vector<visualization_msgs::Marker> &marke
     // Iterate the poses in the list
     visualization_msgs::Marker vertices;
     vertices.header.frame_id = "odom";
-    vertices.header.stamp - ros::Time();
+    vertices.header.stamp = ros::Time();
     vertices.color.a = 1.0;
     vertices.color.r = 0.0;
     vertices.color.g = 0.0;
@@ -88,26 +93,54 @@ void PoseGraph::get_graph_markers(std::vector<visualization_msgs::Marker> &marke
     vertices.id = 0;
     visualization_msgs::Marker pose_edges;
     pose_edges.header.frame_id = "odom";
-    pose_edges.header.stamp - ros::Time();
+    pose_edges.header.stamp = ros::Time();
     pose_edges.color.a = 1.0;
     pose_edges.color.r = 0.0;
     pose_edges.color.g = 0.5;
     pose_edges.color.b = 0.0;
     pose_edges.scale.x = 0.05;
     pose_edges.header.stamp;
-    pose_edges.type = visualization_msgs::Marker::LINE_STRIP;
+    pose_edges.type = visualization_msgs::Marker::LINE_LIST;
     pose_edges.id = 1;
+    visualization_msgs::Marker loop_closure_edges;
+    loop_closure_edges.header.frame_id = "odom";
+    loop_closure_edges.header.stamp = ros::Time();
+    loop_closure_edges.color.a = 1.0;
+    loop_closure_edges.color.r = 0.0;
+    loop_closure_edges.color.g = 0.5;
+    loop_closure_edges.color.b = 0.5;
+    loop_closure_edges.scale.x = 0.05;
+    loop_closure_edges.type = visualization_msgs::Marker::LINE_LIST;
+    loop_closure_edges.id = 2;
     for (int i = 0; i < poses.size(); ++i){
         geometry_msgs::Point vertex;
         vertex.x = poses[i]->coords.x();
         vertex.y = poses[i]->coords.y();
         vertex.z = poses[i]->coords.z();
         vertices.points.push_back(vertex);
-        pose_edges.points.push_back(vertex);
+        //pose_edges.points.push_back(vertex);
     }
+    for (int i = 0; i < edges.size(); ++i){
+        geometry_msgs::Point from,to;
+        from.x = edges[i]->v1->coords.x();
+        from.y = edges[i]->v1->coords.y();
+        from.z = edges[i]->v1->coords.z();
 
+        to.x = edges[i]->v2->coords.x();
+        to.y = edges[i]->v2->coords.y();
+        to.z = edges[i]->v2->coords.z();
+
+        if(edges[i]->loop_closure){
+            loop_closure_edges.points.push_back(from);
+            loop_closure_edges.points.push_back(to);
+        }else{
+            pose_edges.points.push_back(from);
+            pose_edges.points.push_back(to);
+        }
+    }
     markers.push_back(vertices);
     markers.push_back(pose_edges);
+    markers.push_back(loop_closure_edges);
 }
 
 void PoseGraph::get_prev_transform(Eigen::Affine3d &transform, nav_msgs::Odometry odom) {

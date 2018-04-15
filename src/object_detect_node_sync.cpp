@@ -327,14 +327,30 @@ void ObjectDetector::frame_callback(const sensor_msgs::Image::ConstPtr& rgb,
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr pub_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-            icp_gen.setInputTarget(pose->cloud);
-            icp_gen.setInputSource(matched_object->pose->cloud);
+            //icp_gen.setInputTarget(pose->cloud);
+            //icp_gen.setInputSource(matched_object->pose->cloud);
+            icp_gen.setInputTarget(matched_object->pose->cloud);
+            icp_gen.setInputSource(pose->cloud);
             icp_gen.align(*aligned_cloud);
-            *pub_cloud = *(pose->cloud);
-            *pub_cloud += *aligned_cloud;
-            cloud_pub.publish(pub_cloud);
-            Eigen::Affine3f relative_trans(icp_gen.getFinalTransformation());
-            ROS_WARN_STREAM("Relative Transformation: " << relative_trans.matrix());
+            if(icp_gen.hasConverged()) {
+                *pub_cloud = *(pose->cloud);
+                *pub_cloud += *aligned_cloud;
+                cloud_pub.publish(pub_cloud);
+                // Make a Affine transformation from the ICP results.
+                Eigen::Affine3f relative_trans(icp_gen.getFinalTransformation());
+                // Make a Vector3d for the graph optimizer.
+                Eigen::Vector3d relative_trans_vec(relative_trans.translation().x(),
+                                                   relative_trans.translation().y(),
+                                                   relative_trans.rotation().eulerAngles(0, 1, 2)(2));
+                Eigen::Matrix3d covariance = Eigen::Matrix3d::Identity();
+                poseGraph->add_edge(pose,matched_object->pose,relative_trans_vec,covariance,true);
+                ROS_WARN_STREAM(
+                        "Relative Transformation: " << relative_trans.matrix() << relative_trans.translation().x()
+                                                    << " " << relative_trans.translation().y() << " "
+                                                    << relative_trans.rotation().eulerAngles(0, 1, 2)(2));
+            }else{
+                ROS_WARN_STREAM("Could not compute loop closure transformation between poses!");
+            }
         }
     }
 

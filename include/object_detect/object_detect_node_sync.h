@@ -23,6 +23,7 @@
 #include <std_msgs/Int32MultiArray.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/common/impl/centroid.hpp>
 #include "ORB_Featurizer.h"
 #include "GraphOptimizer_G2O.h"

@@ -37,10 +37,18 @@ ObjectDetector::ObjectDetector(){
     featurizer = std::make_shared<ORB_Featurizer>();
     // Set ICP parameters.
     icp_gen.setMaximumIterations(30);
-    icp_gen.setMaxCorrespondenceDistance(0.05);
+    ROS_INFO_STREAM("Default Transform Epsilon: " << icp_gen.getTransformationEpsilon());
+    ROS_INFO_STREAM("Default Euclidean Fitness Epsilon: " << icp_gen.getEuclideanFitnessEpsilon());
+    ROS_INFO_STREAM("Default RANSAC Outlier Rejection Threshold: " << icp_gen.getRANSACOutlierRejectionThreshold());
+    ROS_INFO_STREAM("Default Max Corrsepondence Dist: " << icp_gen.getMaxCorrespondenceDistance());
+    icp_gen.setMaxCorrespondenceDistance(0.025);
     icp_gen.setTransformationEpsilon(1e-8);
-    icp_gen.setEuclideanFitnessEpsilon (1);
-    icp_gen.setRANSACOutlierRejectionThreshold(1.5);
+    //icp_gen.setEuclideanFitnessEpsilon (1);
+    //icp_gen.setRANSACOutlierRejectionThreshold(1.5);
+    ROS_INFO_STREAM("Transform Epsilon: " << icp_gen.getTransformationEpsilon());
+    ROS_INFO_STREAM("Euclidean Fitness Epsilon: " << icp_gen.getEuclideanFitnessEpsilon());
+    ROS_INFO_STREAM("RANSAC Outlier Rejection Threshold: " << icp_gen.getRANSACOutlierRejectionThreshold());
+    ROS_INFO_STREAM("Max Corrsepondence Dist: " << icp_gen.getMaxCorrespondenceDistance());
     // Set Voxel Grid parameters.
     filter_grid.setLeafSize(0.08,0.08,0.08);
     // Create Pose Graph.
@@ -213,9 +221,8 @@ void ObjectDetector::frame_callback(const sensor_msgs::Image::ConstPtr& rgb,
         ROS_INFO_STREAM("Finished ICP alignment. Score is: " << icp_gen.hasConverged());
         ROS_INFO("Concatenating Clouds.");
         ROS_INFO_STREAM("Finished concatenating. Cloud size is: " << poses_cloud->size());
-
         *poses_cloud += *out_cloud;
-
+        pcl::io::savePCDFileASCII("cloud_" + std::to_string(frame_num)+ ".pcd", *out_cloud);
         ROS_INFO_STREAM("Voxel-izing stitched cloud...");
         filter_grid.setInputCloud(poses_cloud);
         filter_grid.filter(*filt_pose_cloud);
@@ -227,7 +234,7 @@ void ObjectDetector::frame_callback(const sensor_msgs::Image::ConstPtr& rgb,
     poseGraph->get_graph_markers(markerArray.markers);
     graph_pub.publish(markerArray);
     //cloud_pub.publish(poses_cloud);
-    poseGraph->write_graph_to_file();
+    //poseGraph->write_graph_to_file();
 
     /*
      * Pose Graph End
@@ -362,6 +369,7 @@ void ObjectDetector::frame_callback(const sensor_msgs::Image::ConstPtr& rgb,
     std_msgs::Int32MultiArray obj_msg;
     obj_msg.data = object_vals;
     anomaly_pub.publish(obj_msg);
+    poseGraph->write_graph_to_file();
     frame_num++;
 
 }

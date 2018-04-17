@@ -45,7 +45,7 @@ int ObjectMatcher::match_object(std::shared_ptr<DetectedObject> target, std::sha
         cv::Mat mask;
         cv::findHomography(query_pts,train_pts, CV_RANSAC, 3, mask);
 
-        if(cv::countNonZero(mask) > 0.60*query_pts.size()){
+        if(cv::countNonZero(mask) > 0.5*query_pts.size()){
             ROS_INFO_STREAM(cv::countNonZero(mask) << " inliers out of " << train_pts.size() << " possible points." );
             #ifdef DRAW_MATCHED_IMAGES
             cv::Mat out_img;

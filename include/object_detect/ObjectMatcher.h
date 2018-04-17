@@ -15,9 +15,12 @@ class ObjectMatcher {
 public:
     ObjectMatcher(){
         matcher = cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,15,2));
+        ros::param::param<int>("~filt_feature_num",filt_feature_num,FILT_FEATS_SIZE);
+        ROS_INFO_STREAM("Filtered Feature Threshold: " << filt_feature_num);
     }
     int match_object(std::shared_ptr<DetectedObject> target, std::shared_ptr<ObjectInstance> cand,std::shared_ptr<DetectedObject>& match);
 private:
+    int filt_feature_num;
     cv::FlannBasedMatcher matcher;
 };
 

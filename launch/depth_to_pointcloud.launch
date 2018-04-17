@@ -1,0 +1,18 @@
+<launch>
+<!-- Launch the nodelet -->
+<node pkg="nodelet" type="nodelet" args="manager" name="depth_to_pointcloud_manager" output="screen" />
+<node pkg="nodelet" type="nodelet" name="make_point_cloud" args="load depth_image_proc/point_cloud_xyzrgb depth_to_pointcloud_manager --no-bond">
+	<!-- Remap the input topics -->
+	<remap from="/rgb/image_rect_color" to="/camera/rgb/image_raw" />
+	<remap from="/rgb/camera_info" to="/camera/rgb/camera_info" />
+	<remap from="/depth_registered/image_rect" to="/camera2/depth_realsense/image_rect"/>
+	<!-- Remap the output topics -->
+	<remap from="depth_registered/points" to="/camera2/cloudRGB"/>
+	<param name="queue_size" type="int" value="300" />
+
+</node>
+<!-- Launch a throttle node to throttle the output of the registered point cloud -->
+<node name="cloud_throttle" pkg="topic_tools" type="throttle" args="messages /camera2/cloudRGB 1 /camera2/cloudRGB/throttled"/>
+<node name="rgb_throttle" pkg="topic_tools" type="throttle" args="messages /camera/rgb/image_raw 1 /camera/rgb/image_raw/throttled"/>
+</launch>
+	

@@ -38,7 +38,7 @@ int ObjectMatcher::match_object(std::shared_ptr<DetectedObject> target, std::sha
             query_pts.push_back(target->keypoints[filtered_matches[j].queryIdx].pt);
             train_pts.push_back((*it)->keypoints[filtered_matches[j].trainIdx].pt);
         }
-        if(filtered_matches.size() < FILT_FEATS_SIZE){
+        if(filtered_matches.size() < filt_feature_num){
             ROS_ERROR_STREAM("Not enough features passed filtering!");
             continue;
         }

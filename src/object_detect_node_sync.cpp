@@ -6,7 +6,7 @@
 #include "object_detect_node_sync.h"
 
 int main(int argc, char** argv) {
-    ros::init(argc,argv,"sync_obj_detect");
+    ros::init(argc,argv,"object_detect_sync");
     ROS_INFO_STREAM("Creating ObjectDetector object.");
     ObjectDetector detector;
     ROS_INFO_STREAM("Setup complete.");
@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
 }
 
 ObjectDetector::ObjectDetector(){
+    node = ros::NodeHandle("~");
     // Set the first measurement boolean to true.
     first_measurement = true;
     // Set the frame number to 0.
@@ -36,13 +37,27 @@ ObjectDetector::ObjectDetector(){
     // Create featurizer for images.
     featurizer = std::make_shared<ORB_Featurizer>();
     // Set ICP parameters.
-    icp_gen.setMaximumIterations(30);
+    int icp_iterations;
+    double max_corr_dist, transform_eps, ransac_outlier_thresh;
+    if(node.getParam("icp_max_iters",icp_iterations)){
+        icp_gen.setMaximumIterations(icp_iterations);
+    }else{
+        icp_gen.setMaximumIterations(30);
+    }
     ROS_INFO_STREAM("Default Transform Epsilon: " << icp_gen.getTransformationEpsilon());
     ROS_INFO_STREAM("Default Euclidean Fitness Epsilon: " << icp_gen.getEuclideanFitnessEpsilon());
     ROS_INFO_STREAM("Default RANSAC Outlier Rejection Threshold: " << icp_gen.getRANSACOutlierRejectionThreshold());
     ROS_INFO_STREAM("Default Max Corrsepondence Dist: " << icp_gen.getMaxCorrespondenceDistance());
-    icp_gen.setMaxCorrespondenceDistance(0.025);
-    icp_gen.setTransformationEpsilon(1e-8);
+    if(node.getParam("max_corr_dist",max_corr_dist)){
+        icp_gen.setMaxCorrespondenceDistance(max_corr_dist);
+    }else{
+        icp_gen.setMaxCorrespondenceDistance(0.025);
+    }
+    if(node.getParam("transform_eps", transform_eps)){
+        icp_gen.setTransformationEpsilon(transform_eps);
+    }else{
+        icp_gen.setTransformationEpsilon(1e-8);
+    }
     //icp_gen.setEuclideanFitnessEpsilon (1);
     //icp_gen.setRANSACOutlierRejectionThreshold(1.5);
     ROS_INFO_STREAM("Transform Epsilon: " << icp_gen.getTransformationEpsilon());
@@ -50,7 +65,12 @@ ObjectDetector::ObjectDetector(){
     ROS_INFO_STREAM("RANSAC Outlier Rejection Threshold: " << icp_gen.getRANSACOutlierRejectionThreshold());
     ROS_INFO_STREAM("Max Corrsepondence Dist: " << icp_gen.getMaxCorrespondenceDistance());
     // Set Voxel Grid parameters.
-    filter_grid.setLeafSize(0.08,0.08,0.08);
+    float voxel_grid_leaf_size;
+    if(node.getParam("voxel_grid_leaf_size",voxel_grid_leaf_size)){
+        filter_grid.setLeafSize(voxel_grid_leaf_size,voxel_grid_leaf_size,voxel_grid_leaf_size);
+    }else {
+        filter_grid.setLeafSize(0.08, 0.08, 0.08);
+    }
     // Create Pose Graph.
     poseGraph = std::make_shared<PoseGraph>();
     // Create new Pose Cloud (Concatenated pose clouds).
@@ -68,7 +88,9 @@ ObjectDetector::ObjectDetector(){
     //signal(SIGINT, ObjectDetector::sigint_handler);
     // Create a new TF detection model.
     dm = std::make_shared<DetectionModel>();
-
+    if(!node.getParam("min_feature_num",min_feature_num))
+        min_feature_num = MIN_FEATURE_NUM;
+    ROS_INFO_STREAM("Minimum Features: " << min_feature_num);
     // Advertise the detected objects topic.
     anomaly_pub = node.advertise<std_msgs::Int32MultiArray>("objects",1);
     // Advertise the object labels topic.

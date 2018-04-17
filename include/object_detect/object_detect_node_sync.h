@@ -36,6 +36,7 @@ typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, pcl:
 class ObjectDetector {
 private:
     bool first_measurement;
+    int min_feature_num;
     nav_msgs::Odometry prev_pose;
     // Pointer to detection model.
     std::shared_ptr<DetectionModel> dm;

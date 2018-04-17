@@ -12,7 +12,7 @@
 #ifndef OBJECT_DETECT_DETECTIONMODEL_H
 #define OBJECT_DETECT_DETECTIONMODEL_H
 
-#define MODEL_PATH  "frozen_inference_graph.pb"
+#define MODEL_PATH  "/home/ros/frozen_inference_graph.pb"
 #define IMAGE_WIDTH 640
 #define IMAGE_HEIGHT 480
 #define IMAGE_CHANNELS 3

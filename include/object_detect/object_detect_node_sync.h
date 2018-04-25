@@ -18,6 +18,7 @@
 #include "Memory.h"
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/features/normal_3d.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <std_msgs/Int32MultiArray.h>
@@ -25,33 +26,53 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/impl/centroid.hpp>
+#include <Eigen/Geometry>
 #include "ORB_Featurizer.h"
 #include "GraphOptimizer_G2O.h"
+#include <fstream>
+#include <time.h>
+#include <math.h>
 #include <pcl/registration/icp.h>
+#include <pcl/registration/transformation_estimation_2D.h>
 #include <pcl/filters/voxel_grid.h>
 #include "PoseGraph.h"
 
 #define MIN_FEATURE_NUM 50
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, pcl::PointCloud<pcl::PointXYZRGB>, nav_msgs::Odometry> frame_sync_policy;
+typedef pcl::registration::TransformationEstimation2D<pcl::PointNormal, pcl::PointNormal> Trans_Est_2D;
 class ObjectDetector {
 private:
     bool first_measurement;
     int min_feature_num;
     nav_msgs::Odometry prev_pose;
+    // Stamped transform for map->odom
+    geometry_msgs::TransformStamped ts;
+    // Eigen transform for the origin pose.
+    Eigen::Affine3d origin_pose;
     // Pointer to detection model.
     std::shared_ptr<DetectionModel> dm;
     // Publishers
     ros::Publisher anomaly_pub, markers, graph_pub, cloud_pub;
-    // Frame number.
+    // Frame number
     int frame_num;
     std::shared_ptr<ORB_Featurizer> featurizer;
     // Pointers to TF2 buffer and listeners.
     std::shared_ptr<tf2_ros::Buffer> buffer;
     std::shared_ptr<tf2_ros::TransformListener> listener;
+    std::shared_ptr<tf2_ros::TransformBroadcaster> broadcaster;
     // Lock for memory to prevent race conditions.
     boost::shared_mutex memory_lock;
+    boost::shared_mutex tf_lock;
     // ICP object for performing Iterative Closest Point alignment.
-    pcl::IterativeClosestPoint<pcl::PointXYZRGB,pcl::PointXYZRGB> icp_gen;
+    pcl::IterativeClosestPoint<pcl::PointNormal,pcl::PointNormal> icp_gen;
+    //pcl::IterativeClosestPoint<pcl::PointXYZRGB,pcl::PointXYZRGB> icp_gen;
+    // Use SVD Scale estimation
+    //SVDScale::Ptr transform_estimator;
+    Trans_Est_2D::Ptr transform_estimator;
+    // PCL Normal Estimation to improve ICP.
+    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::PointNormal> norm_estimator;
+    // PCL KD-Tree pointer for Normal Estimation.
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr search_tree;
     // VoxelGrid for downsampling Point Cloud.
     pcl::VoxelGrid<pcl::PointXYZRGB> filter_grid;
     // Graph Optimizer
@@ -79,9 +100,13 @@ public:
     ObjectDetector();
     void frame_callback(const sensor_msgs::Image::ConstPtr& rgb, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, const nav_msgs::Odometry::ConstPtr& odom);
     void publish_objects_vis();
+    void publish_map_trans();
     void sigint_handler(int);
+    std::shared_ptr<PoseGraph> getPoseGraph(){return poseGraph;}
     // Memory object
     Memory memory;
+    // Output file streams for performance analysis
+    std::ofstream analytics_file;
 };
 
 

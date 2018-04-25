@@ -4,7 +4,9 @@
 
 #include "PoseGraph.h"
 
-std::shared_ptr<Pose> PoseGraph::add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
+std::shared_ptr<Pose> PoseGraph::add_vertex(nav_msgs::Odometry odom,
+                                            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr,
+                                            pcl::PointCloud<pcl::PointNormal>::Ptr normal_ptr){
 
     Eigen::Translation3d coords(odom.pose.pose.position.x,
                                 odom.pose.pose.position.y,
@@ -14,9 +16,13 @@ std::shared_ptr<Pose> PoseGraph::add_vertex(nav_msgs::Odometry odom, pcl::PointC
                                 odom.pose.pose.orientation.y,
                                 odom.pose.pose.orientation.z);
     Eigen::Affine3d world_transform(coords * rotation);
-
-
-    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,world_transform,coords,rotation, odom.header.stamp,cloud_ptr);
+    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,
+                                                        world_transform,
+                                                        coords,
+                                                        rotation,
+                                                        odom.header.stamp,
+                                                        cloud_ptr,
+                                                        normal_ptr);
     optimizer.addVertex(coords.vector());
     poses.push_back(pose);
     return pose;
@@ -32,9 +38,9 @@ bool PoseGraph::add_edge(std::shared_ptr<Pose> p1, std::shared_ptr<Pose> p2, Eig
 }
 bool PoseGraph::optimize_graph() {
     optimizer.optimizeGraph();
-
+    std::ofstream output("changes_file.txt");
     // Get updated poses after optmization
-    for(int i = 0; i < poses.size(); ++i){
+    for(int i = 0; i < poses.size(); ++i) {
         g2o::SE2 out_pose = optimizer.vertices[i]->estimate();
         Eigen::Vector3d out_vec(out_pose[0],out_pose[1],out_pose[2]);
         Eigen::Translation3d coords(out_vec(0),out_vec(1),0.0);
@@ -45,11 +51,13 @@ bool PoseGraph::optimize_graph() {
         Eigen::Affine3d transform(coords * rotation);
         Eigen::Matrix<double,4,4> old_pose = poses[i]->base_to_world.matrix();
         poses[i]->update_pose(transform,coords);
-        //ROS_INFO_STREAM("Pose difference: " << poses[i]->base_to_world.matrix() - old_pose);
+        output << "Pose difference: " << poses[i]->base_to_world.matrix() - old_pose << std::endl;
     }
+    output.close();
+    optimizer.saveGraph("optimized_graph.g2o");
 }
 
-std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
+std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr, pcl::PointCloud<pcl::PointNormal>::Ptr normal_ptr){
 
     Eigen::Translation3d coords(odom.pose.pose.position.x,
                                 odom.pose.pose.position.y,
@@ -72,7 +80,13 @@ std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pc
     covariance(2,2) = odom.pose.covariance[35];*/
     ROS_INFO_STREAM("Covariance matrix: " << covariance);
     // Make a new pose
-    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,world_transform,coords,rotation, odom.header.stamp,cloud_ptr);
+    std::shared_ptr<Pose> pose = std::make_shared<Pose>(this->alloc_id++,
+                                                        world_transform,
+                                                        coords,
+                                                        rotation,
+                                                        odom.header.stamp,
+                                                        cloud_ptr,
+                                                        normal_ptr);
     int prev_edge_ind = optimizer.vertexIndex - 1;
     int curr_edge_ind = optimizer.vertexIndex;
     auto theta = rotation.toRotationMatrix().eulerAngles(0,1,2)(2);
@@ -81,7 +95,7 @@ std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pc
 
     auto prev_theta = poses[prev_edge_ind]->quat.toRotationMatrix().eulerAngles(0,1,2)(2);
     Eigen::Vector3d prev_pose(poses[prev_edge_ind]->coords.vector()(0),poses[prev_edge_ind]->coords.vector()(1),prev_theta);
-    optimizer.addEdge(prev_edge_ind,curr_edge_ind,(curr_pose-prev_pose),covariance.inverse());
+    optimizer.addOdometryEdge(prev_edge_ind,curr_edge_ind,covariance.inverse());
     //optimizer.addEdge(prev_edge_ind,curr_edge_ind,(pose->coords.vector() - poses[prev_edge_ind]->coords.vector()),covariance.inverse());
     // Make a new edge between this pose and the prior pose.
     std::shared_ptr<PoseEdge> edge = std::make_shared<PoseEdge>(poses.back(),pose);
@@ -99,7 +113,7 @@ std::shared_ptr<Pose> PoseGraph::add_vertex_previous(nav_msgs::Odometry odom, pc
 void PoseGraph::get_graph_markers(std::vector<visualization_msgs::Marker> &markers) {
     // Iterate the poses in the list
     visualization_msgs::Marker vertices;
-    vertices.header.frame_id = "odom";
+    vertices.header.frame_id = "map";
     vertices.header.stamp = ros::Time();
     vertices.color.a = 1.0;
     vertices.color.r = 0.0;
@@ -110,7 +124,7 @@ void PoseGraph::get_graph_markers(std::vector<visualization_msgs::Marker> &marke
     vertices.type = visualization_msgs::Marker::POINTS;
     vertices.id = 0;
     visualization_msgs::Marker pose_edges;
-    pose_edges.header.frame_id = "odom";
+    pose_edges.header.frame_id = "map";
     pose_edges.header.stamp = ros::Time();
     pose_edges.color.a = 1.0;
     pose_edges.color.r = 0.0;
@@ -121,7 +135,7 @@ void PoseGraph::get_graph_markers(std::vector<visualization_msgs::Marker> &marke
     pose_edges.type = visualization_msgs::Marker::LINE_LIST;
     pose_edges.id = 1;
     visualization_msgs::Marker loop_closure_edges;
-    loop_closure_edges.header.frame_id = "odom";
+    loop_closure_edges.header.frame_id = "map";
     loop_closure_edges.header.stamp = ros::Time();
     loop_closure_edges.color.a = 1.0;
     loop_closure_edges.color.r = 0.0;

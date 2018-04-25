@@ -18,13 +18,20 @@ class Pose {
 public:
     int id;
 
-    Pose(int nid, Eigen::Affine3d world_trans, Eigen::Translation3d xyz, Eigen::Quaterniond rotation, ros::Time stamp, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr){
+    Pose(int nid,
+         Eigen::Affine3d world_trans,
+         Eigen::Translation3d xyz,
+         Eigen::Quaterniond rotation,
+         ros::Time stamp,
+         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr,
+         pcl::PointCloud<pcl::PointNormal>::Ptr normal_ptr){
         id = nid;
         base_to_world = world_trans;
         quat = rotation;
         coords = xyz;
         timestamp = stamp;
         cloud = cloud_ptr;
+        normal_cloud = normal_ptr;
     }
     bool update_pose(Eigen::Affine3d world_trans, Eigen::Translation3d xyz){
         // Transform the point cloud by the correction between this transformation and the previous
@@ -41,6 +48,7 @@ public:
     Eigen::Quaterniond quat;
     Eigen::Translation3d coords;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
+    pcl::PointCloud<pcl::PointNormal>::Ptr normal_cloud;
     ros::Time timestamp;
 };
 

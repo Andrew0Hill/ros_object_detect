@@ -171,7 +171,7 @@ set(SOURCES_LIST
 #add_executable(object_detect_node src/object_detect_node.cpp ${SOURCES_LIST} )
 #add_executable(map_publisher_test src/map_publisher_test.cpp)
 #add_executable(graph_builder src/graph_builder.cpp  src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp)
-add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp )
+#add_executable(graph_builder_sync src/graph_builder_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp )
 add_executable(object_detect_sync src/object_detect_node_sync.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp ${SOURCES_LIST})
 add_executable(slam_node src/slam_node.cpp src/ORB_Featurizer.cpp src/FeaturizedImage.cpp src/PoseGraph.cpp src/Pose.cpp src/PoseEdge.cpp src/GraphOptimizer_G2O.cpp)
 ## Rename C++ executable without prefix
@@ -213,15 +213,15 @@ add_executable(slam_node src/slam_node.cpp src/ORB_Featurizer.cpp src/Featurized
 #        ${G2O_CORE_LIBRARY}
 #       ${PCL_LIBRARIES}
 #)
-target_link_libraries(
-        graph_builder_sync
-        ${catkin_LIBRARIES}
-        ${G2O_CORE_LIBRARY}
-        ${G2O_SOLVER_EIGEN}
-        ${G2O_TYPES_SLAM2D}
-        ${G2O_STUFF_LIBRARY}
-        ${PCL_LIBRARIES}
-)
+#target_link_libraries(
+#        graph_builder_sync
+#        ${catkin_LIBRARIES}
+#        ${G2O_CORE_LIBRARY}
+#        ${G2O_SOLVER_EIGEN}
+#        ${G2O_TYPES_SLAM2D}
+#        ${G2O_STUFF_LIBRARY}
+#        ${PCL_LIBRARIES}
+#)
 target_link_libraries(
         object_detect_sync
         ${catkin_LIBRARIES}

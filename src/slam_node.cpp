@@ -11,7 +11,9 @@ int main(int argc, char** argv){
 
 }
 SLAMNode::SLAMNode() {
+    frame_num = 0;
     first_measurement = true;
+    analytics_file.open("SLAM_analytics.txt");
     // Create featurizer
     featurizer = std::make_shared<ORB_Featurizer>();
 
@@ -29,10 +31,15 @@ SLAMNode::SLAMNode() {
 
     // Set ICP parameters.
     icp_gen.setMaximumIterations(30);
-    icp_gen.setMaxCorrespondenceDistance(0.05);
+    icp_gen.setMaxCorrespondenceDistance(0.025);
     icp_gen.setTransformationEpsilon(1e-8);
-    icp_gen.setEuclideanFitnessEpsilon (1);
-    icp_gen.setRANSACOutlierRejectionThreshold(1.5);
+    //icp_gen.setEuclideanFitnessEpsilon (1);
+    //icp_gen.setRANSACOutlierRejectionThreshold(1.5);
+
+    // Set up Normal Estimation object
+    search_tree = pcl::search::KdTree<pcl::PointXYZRGB>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGB>);
+    norm_estimator.setSearchMethod(search_tree);
+    norm_estimator.setKSearch(30);
 
     // Set Voxel Grid parameters.
     filter_grid.setLeafSize(0.08,0.08,0.08);
@@ -63,12 +70,17 @@ void
 SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
                          const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud,
                          const nav_msgs::Odometry::ConstPtr &odom) {
+    double start_time = std::clock();
+    double loop_closure_time = -1;
     // Pointer to hold the voxelized version of the cloud in this message, since we can't modify it.
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr current_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     filter_grid.setInputCloud(cloud);
     filter_grid.filter(*current_cloud);
 
+    pcl::PointCloud<pcl::PointNormal>::Ptr normal_cloud(new pcl::PointCloud<pcl::PointNormal>);
+    norm_estimator.setInputCloud(current_cloud);
+    norm_estimator.compute(*normal_cloud);
     /*
      * Pose Graph Start
      */
@@ -100,6 +112,7 @@ SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
     Eigen::Affine3d c2w_trans = b2w_trans * c2b_trans;
 
     pcl::transformPointCloud(*current_cloud,*current_cloud,c2w_trans);
+    pcl::transformPointCloud(*normal_cloud,*normal_cloud,c2w_trans);
     current_cloud->header.frame_id = "odom";
 
     std::shared_ptr<Pose> pose;
@@ -107,9 +120,10 @@ SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
         ROS_INFO_STREAM("Pose graph is empty! Adding first pose...");
         ROS_INFO_STREAM("Pose cloud is empty. Adding first cloud...");
         *poses_cloud = *current_cloud;
-        pose = poseGraph->add_vertex(*odom,current_cloud);
+        pose = poseGraph->add_vertex(*odom,current_cloud,normal_cloud);
         first_measurement = false;
     }else{
+        /*
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr filt_pose_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -132,7 +146,9 @@ SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
         filter_grid.filter(*filt_pose_cloud);
         *poses_cloud = *filt_pose_cloud;
         ROS_INFO_STREAM("Adding pose to graph.");
-        pose = poseGraph->add_vertex_previous(*odom,out_cloud);
+        pose = poseGraph->add_vertex_previous(*odom,out_cloud,normal_cloud);
+         */
+        pose = poseGraph->add_vertex_previous(*odom,current_cloud,normal_cloud);
     }
     visualization_msgs::MarkerArray markerArray;
     poseGraph->get_graph_markers(markerArray.markers);
@@ -156,6 +172,7 @@ SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
     featurized_image->pose = pose;
     images.push_back(featurized_image);
     // Try to detect loop closures between this image and all previous images.
+    loop_closure_time = std::clock();
     for(int i = 0; i < images.size()-1; ++i){
         // Match the image we featurized to the current image.
         std::vector<std::vector<cv::DMatch>> matches;
@@ -191,10 +208,11 @@ SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
         // Loop Closure
         if(cv::countNonZero(mask) > INLIERS_THRESH){
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+            pcl::PointCloud<pcl::PointNormal>::Ptr aligned_normal_cloud(new pcl::PointCloud<pcl::PointNormal>);
             // Get ICP transformation between the two matching poses.
-            icp_gen.setInputSource(pose->cloud);
-            icp_gen.setInputTarget(images[i]->pose->cloud);
-            icp_gen.align(*aligned_cloud);
+            icp_gen.setInputSource(pose->normal_cloud);
+            icp_gen.setInputTarget(images[i]->pose->normal_cloud);
+            icp_gen.align(*aligned_normal_cloud);
 
             if(icp_gen.hasConverged()) {
                 // Make a Affine transformation from the ICP results.
@@ -210,6 +228,10 @@ SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
                                                     << " " << relative_trans.translation().y() << " "
                                                     << relative_trans.rotation().eulerAngles(0, 1, 2)(2));
                 poseGraph->optimize_graph();
+                double end_total_time = std::clock() - start_time;
+                double end_loop_closure_time = loop_closure_time == -1 ? -1 : std::clock() - loop_closure_time;
+                analytics_file << frame_num << "," << (end_total_time/CLOCKS_PER_SEC) << "," << (end_loop_closure_time/CLOCKS_PER_SEC) << std::endl;
+                ++frame_num;
                 return;
             }else{
                 ROS_WARN_STREAM("Could not compute loop closure transformation between poses!");
@@ -217,6 +239,10 @@ SLAMNode::frame_callback(const sensor_msgs::Image::ConstPtr &rgb,
         }
 
     }
+    double end_total_time = std::clock() - start_time;
+    double end_loop_closure_time = loop_closure_time == -1 ? -1 : std::clock() - loop_closure_time;
+    analytics_file << frame_num << "," << (end_total_time/CLOCKS_PER_SEC) << "," << (end_loop_closure_time/CLOCKS_PER_SEC) << std::endl;
+    ++frame_num;
 }
 
 

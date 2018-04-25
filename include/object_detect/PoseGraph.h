@@ -11,6 +11,7 @@
 #include <Eigen/Core>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/features/normal_3d.h>
 #include <pcl_ros/point_cloud.h>
 #include <g2o/types/slam2d/types_slam2d.h>
 #include <g2o/core/block_solver.h>
@@ -31,8 +32,8 @@ public:
         // TF Listener
         listener = std::make_shared<tf2_ros::TransformListener>(*buffer);
     }
-    std::shared_ptr<Pose> add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr);
-    std::shared_ptr<Pose> add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr);
+    std::shared_ptr<Pose> add_vertex(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr,pcl::PointCloud<pcl::PointNormal>::Ptr normal_ptr);
+    std::shared_ptr<Pose> add_vertex_previous(nav_msgs::Odometry odom, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr, pcl::PointCloud<pcl::PointNormal>::Ptr normal_ptr);
     bool optimize_graph();
     bool add_edge(std::shared_ptr<Pose> p1, std::shared_ptr<Pose> p2, Eigen::Vector3d relativeTransform, Eigen::Matrix3d covariance, bool loop_closure = false);
     void get_prev_transform(Eigen::Affine3d &transform, nav_msgs::Odometry odom);

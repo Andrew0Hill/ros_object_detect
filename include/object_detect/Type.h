@@ -47,6 +47,7 @@ public:
     // Do we actually need this?
     std::vector<cv::KeyPoint> keypoints;
 
+    bool full_matching;
 
 
     // Constructor requires that an ID is specified.
@@ -54,6 +55,8 @@ public:
         id = oid;
         alloc_id = 0;
         ROS_INFO_STREAM("New type added for class: " << ClassMap::get_class(id));
+
+        ros::param::param<bool>("~full_match",full_matching,true);
     }
 
     // Function to allocate IDs to new ObjectInstances in this type.

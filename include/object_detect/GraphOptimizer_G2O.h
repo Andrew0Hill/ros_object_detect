@@ -55,7 +55,7 @@ public:
     // INPUT: Index of a fromVertex and toVertex, Column vector giving relative pose.
     // 3x3 matrix of type float Information Matrix.
     void addEdge(const int fromIndex, const int toIndex, const Eigen::Vector3d &relativePose, const Eigen::Matrix<double,3,3> &infoMatrix);
-
+    void addOdometryEdge(const int fromIndex, const int toIndex, const Eigen::Matrix<double,3,3> &infoMatrix);
     // Calls a graph optimization process from g2o::SparseOptimizer
     // to determine the pose configuration that best satisfies the edge constraints
     void optimizeGraph();

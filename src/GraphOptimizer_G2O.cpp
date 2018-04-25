@@ -87,7 +87,8 @@ void GraphOptimizer_G2O::addEdge(const int fromIndex, const int toIndex, const E
 
     ROS_INFO_STREAM("Done adding edge.");
     // setMeasurement takes a SE2 object relativeTransform
-    edge->setMeasurementFromState();
+    //edge->setMeasurementFromState();
+    edge->setMeasurement(relativeTransform);
     //edge->setMeasurement(relativeTransform);
 
     // Set the information matrix to identity
@@ -102,7 +103,33 @@ void GraphOptimizer_G2O::addEdge(const int fromIndex, const int toIndex, const E
     edges.push_back(edge);
     optimizer.addEdge(edge);
 }
+void GraphOptimizer_G2O::addOdometryEdge(const int fromIndex, const int toIndex, const Eigen::Matrix<double,3,3> &infoMatrix){
+    // Setup Edge
+    g2o::EdgeSE2 *edge = new g2o::EdgeSE2;
+    edge->vertices()[0] = optimizer.vertex(fromIndex);
+    edge->vertices()[1] = optimizer.vertex(toIndex);
 
+    // Edge ID
+    edge->setId(nextEdgeIndex);
+    ++nextEdgeIndex;
+
+    ROS_INFO_STREAM("Done adding edge.");
+    // setMeasurement takes a SE2 object relativeTransform
+    edge->setMeasurementFromState();
+    //edge->setMeasurement(relativeTransform);
+
+    // Set the information matrix to identity
+    edge->setInformation(infoMatrix);
+
+    // Added these in based on point-point code in g2o demo
+    // Extra params to play around with
+    //edge->setRobustKernel(true);
+    //edge->setHuberWidth(0.01);
+    //edge->
+    // Add edge to the optimizer
+    edges.push_back(edge);
+    optimizer.addEdge(edge);
+}
 void GraphOptimizer_G2O::optimizeGraph()
 {
 
